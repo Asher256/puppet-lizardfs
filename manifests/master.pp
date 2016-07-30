@@ -1,7 +1,7 @@
 #
-# == Define: lizardfs
+# == Define: lizardfs::master
 #
-# 'lizardfs::*' classes will help you to configure LizardFS:
+# 'lizardfs::master': install and configure LizardFS master
 #
 # This class follows the recommendations of the "Puppet Labs Style Guide":
 # http://docs.puppetlabs.com/guides/style_guide.html . If you want to
@@ -17,11 +17,22 @@
 #
 # === Examples
 #
-# class {'lizardfs':
+# class {'lizardfs::master':
 # }
 #
 # === Parameters
 #
 # [*foo*]    bar
 #
+class lizardfs::master($ensure = 'present')
+{
+  validate_string($ensure)
+
+  if $operatingsystem in ['Debian', 'Ubuntu'] {
+    package { "lizardfs-master":
+      ensure  => present,
+    }
+  }
+}
+
 # vim:et:sw=2:ts=2:sts=2:tw=0:fenc=utf-8
