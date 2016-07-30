@@ -7,7 +7,9 @@
   "source": "https://github.com/Asher256/puppet-lizardfs",
   "project_page": "https://github.com/Asher256/puppet-lizardfs",
   "issues_url": "https://github.com/Asher256/puppet-lizardfs/issues",
-  "dependencies": [],
+  "dependencies": [
+    {"name":"puppetlabs/stdlib", "version_requirement":">= 4.5.0 < 5.0.0"}
+  ],
   "operatingsystem_support": [
     {
       "operatingsystem": "Debian",
