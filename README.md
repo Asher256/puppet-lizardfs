@@ -9,7 +9,9 @@
 
 ## Overview
 
-The puppet-lizardfs module lets you use Puppet to install and configure LizardFS, the open source distributed file system https://github.com/lizardfs/lizardfs
+The puppet-lizardfs module lets you use Puppet to install and configure LizardFS.
+
+LizardFS is an open source distributed file system, highly available, scalable and ready to use.
 
 ## Requirements
 
