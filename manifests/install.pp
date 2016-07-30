@@ -1,7 +1,7 @@
 #
 # == Define: lizardfs
 #
-# 'lizardfs::*' classes will help you to configure LizardFS:
+# 'lizardfs::install' install the packages and create some directories/files
 #
 # This class follows the recommendations of the "Puppet Labs Style Guide":
 # http://docs.puppetlabs.com/guides/style_guide.html . If you want to
@@ -17,16 +17,14 @@
 #
 # === Examples
 #
-# class {'lizardfs':
-# }
+# include lizardfs::install
 #
-# === Parameters
-#
-# [*foo*]    bar
-#
-class lizardfs() {
-  if ! ($operatingsystem in ['Debian', 'Ubuntu']) {
-    fail("The operating system '$operatingsystem' is not supported by 'puppet-lizardfs'.")
+class lizardfs::install() {
+  file { '/etc/mfs':
+    ensure => directory,
+    mode   => '0755',
+    owner  => 'root',
+    group  => 'root',
   }
 }
 # vim:et:sw=2:ts=2:sts=2:tw=0:fenc=utf-8
