@@ -40,12 +40,6 @@ class lizardfs::cgi(
 
   include lizardfs
 
-  Exec {
-    user => 'root',
-    path => '/bin:/sbin:/usr/bin:/usr/sbin',
-    require => Class['lizardfs']
-  }
-
   File {
     owner   => 'root',
     group   => 'root',
@@ -70,19 +64,17 @@ class lizardfs::cgi(
   }
 
   file { '/etc/default/lizardfs-cgiserv' :
-    ensure  => present,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0644',
     content => template('lizardfs/etc/default/lizardfs-cgiserv'),
   }
 
   if $manage_service {
-    service { $service_name :
-      ensure  => running,
-      enable  => true,
-      require => [Package[$cgi_package, $cgi_serv_package],
-                  File['/etc/default/lizardfs-cgiserv']],
+    service { $service_name:
+      ensure    => running,
+      enable    => true,
+      subscribe => File['/etc/default/lizardfs-cgiserv'],
+      require   => [Package[$cgi_package],
+                    Package[$cgi_serv_package],
+                    File['/etc/default/lizardfs-cgiserv']],
     }
   }
 
