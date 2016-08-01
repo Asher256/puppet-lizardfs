@@ -30,6 +30,10 @@
 class lizardfs::cgi(
   $ensure = 'present',
   $manage_service = true,
+  $bind_host = 'localhost',
+  $bind_port = 9425,
+  $user = 'nobody',
+  $group= 'nogroup',
 )
 {
   validate_string($ensure)
@@ -50,7 +54,7 @@ class lizardfs::cgi(
   }
 
   if $::operatingsystem in ['Debian', 'Ubuntu'] {
-    $service_name = 'lizardfs-cgi'
+    $service_name = 'lizardfs-cgiserv'
     $cgi_package = 'lizardfs-cgi'
     $cgi_serv_package = 'lizardfs-cgiserv'
     package { [$cgi_package, $cgi_serv_package]:
@@ -65,11 +69,20 @@ class lizardfs::cgi(
     fail()
   }
 
+  file { '/etc/default/lizardfs-cgiserv' :
+    ensure  => present,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    content => template('lizardfs/etc/default/lizardfs-cgiserv'),
+  }
+
   if $manage_service {
     service { $service_name :
       ensure  => running,
       enable  => true,
-      require => Package[$cgi_package, $cgi_serv_package],
+      require => [Package[$cgi_package, $cgi_serv_package],
+                  File['/etc/default/lizardfs-cgiserv']],
     }
   }
 
