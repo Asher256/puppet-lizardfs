@@ -63,18 +63,23 @@ class lizardfs::cgi(
     fail()
   }
 
-  file { '/etc/default/lizardfs-cgiserv' :
-    content => template('lizardfs/etc/default/lizardfs-cgiserv'),
-  }
-
   if $manage_service {
+    file { '/etc/default/lizardfs-cgiserv' :
+      content => template('lizardfs/etc/default/lizardfs-cgiserv'),
+      notify  => $service_name,
+    }
+
     service { $service_name:
       ensure    => running,
       enable    => true,
-      subscribe => File['/etc/default/lizardfs-cgiserv'],
       require   => [Package[$cgi_package],
                     Package[$cgi_serv_package],
                     File['/etc/default/lizardfs-cgiserv']],
+    }
+  }
+  else {
+    file { '/etc/default/lizardfs-cgiserv' :
+      content => template('lizardfs/etc/default/lizardfs-cgiserv'),
     }
   }
 
