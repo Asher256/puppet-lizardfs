@@ -24,43 +24,52 @@
 #   manage_service => false,
 #
 #   # The master's "options" keys are referenced here
-#   # Doc: https://github.com/lizardfs/lizardfs/blob/master/doc/mfsmaster.cfg.5.txt
+#   # https://github.com/lizardfs/lizardfs/blob/master/doc/mfsmaster.cfg.5.txt
 #   options => {'PERSONALITY' => 'master'}
 #
 #   # a list of mfsexports.cfg lines
-#   # Doc: https://github.com/lizardfs/lizardfs/blob/master/doc/mfsexports.cfg.5.txt
+#   # https://github.com/lizardfs/lizardfs/blob/master/doc/mfsexports.cfg.5.txt
 #   # By default: ['*    /    ro']    (read only to everyone)
 #   exports => ['address    directory     <options>']
 #
 #   # A list mfsgoals.cfg lines
-#   # Doc: https://github.com/lizardfs/lizardfs/blob/master/doc/mfsgoals.cfg.5.txt
+#   # https://github.com/lizardfs/lizardfs/blob/master/doc/mfsgoals.cfg.5.txt
 #   goals => ['1 1 : _']
 # }
 #
+# === Parameters
+#
+# [*ensure*]    This parameter is passed to the LizardFS Master package.
+#               You can specify: present, absent or the package version
+#
+
 class lizardfs::master(
   $ensure = 'present',
-  $manage_service = false,
-  $options={},
-  $exports=['*    /    ro'],
-  $goals=[])
+  $options = {},
+  $exports = ['*    /    ro'],
+  $goals = [],
+  $manage_service = true)
 {
   validate_string($ensure)
-  validate_bool($manage_service)
   validate_hash($options)
   validate_array($exports)
+  validate_array($goals)
+  validate_bool($manage_service)
+
+  include lizardfs
 
   Exec {
     user => 'root',
     path => '/bin:/sbin:/usr/bin:/usr/sbin',
+    require => Class['lizardfs']
   }
 
   File {
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
+    require => Class['lizardfs']
   }
-
-  include lizardfs
 
   if $::operatingsystem in ['Debian', 'Ubuntu'] {
     $service_name = 'lizardfs-master'
@@ -102,8 +111,9 @@ class lizardfs::master(
 
   if $manage_service {
     service { $service_name :
-      ensure => running,
-      enable => true,
+      ensure  => running,
+      enable  => true,
+      require => Package[$master_package],
     }
   }
 
