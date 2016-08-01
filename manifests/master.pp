@@ -88,19 +88,19 @@ class lizardfs::master(
 
   file { '/etc/lizardfs/mfsmaster.cfg' :
     ensure  => present,
-    content => template('lizardfs/mfsmaster.cfg.erb'),
+    content => template('lizardfs/etc/lizardfs/mfsmaster.cfg.erb'),
     require => [Package[$master_package]],
   }
 
   -> file { '/etc/lizardfs/mfsexports.cfg' :
     ensure  => present,
-    content => template('lizardfs/mfsexports.cfg.erb'),
+    content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
     require => [Package[$master_package]],
   }
 
   -> file { '/etc/lizardfs/mfsgoals.cfg' :
     ensure  => present,
-    content => template('lizardfs/mfsgoals.cfg.erb'),
+    content => template('lizardfs/etc/lizardfs/mfsgoals.cfg.erb'),
     require => [Package[$master_package]],
   }
 
