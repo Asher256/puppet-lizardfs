@@ -29,11 +29,11 @@
 
 class lizardfs::cgi(
   $ensure = 'present',
-  $manage_service = true,
   $bind_host = 'localhost',
-  $bind_port = 9425,
+  $bind_port,
   $user = 'nobody',
   $group= 'nogroup',
+  $manage_service = true,
 )
 {
   validate_string($ensure)
@@ -63,23 +63,20 @@ class lizardfs::cgi(
     fail()
   }
 
-  if $manage_service {
-    file { '/etc/default/lizardfs-cgiserv' :
-      content => template('lizardfs/etc/default/lizardfs-cgiserv'),
-      notify  => $service_name,
-    }
+  notify {'hello world': }
 
+  file { '/etc/default/lizardfs-cgiserv' :
+    content => template('lizardfs/etc/default/lizardfs-cgiserv'),
+  }
+
+  if $manage_service {
     service { $service_name:
       ensure    => running,
       enable    => true,
+      subscribe => File['/etc/default/lizardfs-cgiserv'],
       require   => [Package[$cgi_package],
                     Package[$cgi_serv_package],
                     File['/etc/default/lizardfs-cgiserv']],
-    }
-  }
-  else {
-    file { '/etc/default/lizardfs-cgiserv' :
-      content => template('lizardfs/etc/default/lizardfs-cgiserv'),
     }
   }
 
