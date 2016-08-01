@@ -20,13 +20,11 @@
 # class {'lizardfs':
 # }
 #
-# === Parameters
-#
-# [*foo*]    bar
-#
+
 class lizardfs() {
   if ! ($operatingsystem in ['Debian', 'Ubuntu']) {
     fail("The operating system '$operatingsystem' is not supported by 'puppet-lizardfs'.")
   }
 }
+
 # vim:et:sw=2:ts=2:sts=2:tw=0:fenc=utf-8
