@@ -15,10 +15,10 @@ LIZARDFSCGISERV_USER=<%= @user %>
 LIZARDFSCGISERV_GROUP=<%= @group %>
 
 ## local address to listen on (default: any)
-BIND_HOST=<%= bind_host %>
+BIND_HOST=<%= @bind_host %>
 
 ## port to listen on (default: 9425)
-BIND_PORT=<%= bind_port %>
+BIND_PORT=<%= @bind_port %>
 
 ## local path to use as HTTP document root (default: /usr/share/mfscgi)
 # ROOT_PATH=/usr/share/mfscgi
