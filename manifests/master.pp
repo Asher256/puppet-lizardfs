@@ -70,16 +70,16 @@ class lizardfs::master(
     require => Class['lizardfs']
   }
 
+  Package {
+      require => Class['lizardfs']
+  }
+
   if $::operatingsystem in ['Debian', 'Ubuntu'] {
     $service_name = 'lizardfs-master'
     $master_package = 'lizardfs-master'
     package { $master_package:
       ensure  => present,
     }
-
-    Class['lizardfs']
-    -> Package[$master_package]
-    -> Class['lizardfs::install']
   }
   else {
     fail()
@@ -115,8 +115,6 @@ class lizardfs::master(
       require => Package[$master_package],
     }
   }
-
-  include lizardfs::install
 }
 
 # vim:et:sw=2:ts=2:sts=2:tw=0:fenc=utf-8
