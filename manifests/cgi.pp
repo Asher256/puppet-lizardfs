@@ -1,7 +1,7 @@
 #
 # == Define: lizardfs::cgi
 #
-# 'lizardfs::cgi': install and configure LizardFS CGI (web interface).
+# 'lizardfs::cgi': install and configure LizardFS CGI Server (web interface).
 #
 # This class follows the recommendations of the "Puppet Labs Style Guide":
 # http://docs.puppetlabs.com/guides/style_guide.html . If you want to
@@ -18,13 +18,23 @@
 # === Examples
 #
 # class {'lizardfs::cgi':
-#   ensure  => 'present',
+#   ensure => 'present',
 # }
 #
 # === Parameters
 #
-# [*ensure*]    This parameter is passed to the LizardFS CGI package.
-#               You can specify: present, absent or the package version
+# [*ensure*] This parameter is passed to the LizardFS CGI package.
+#            You can specify: present, absent or the package version.
+#
+# [*bind_host*] local address to listen on
+#
+# [*bind_port*] port to listen on
+#
+# [*user*] user to run the daemon as
+#
+# [*group*] group to run the daemon as
+#
+# [*manage_service*] ask Puppet to start LizardFS CGI Server automatically
 #
 
 class lizardfs::cgi(

@@ -1,7 +1,7 @@
 #
 # == Define: lizardfs::master
 #
-# 'lizardfs::master': install and configure LizardFS master
+# 'lizardfs::master': install and configure LizardFS master.
 #
 # This class follows the recommendations of the "Puppet Labs Style Guide":
 # http://docs.puppetlabs.com/guides/style_guide.html . If you want to
@@ -27,25 +27,26 @@
 #
 # === Parameters
 #
-# [*ensure*]  This parameter is passed to the LizardFS Master package.
-#     You can specify: present, absent or the package version
+# [*ensure*] this parameter is passed to the LizardFS Master package.
+# You can specify: present, absent or the package version.
 #
-# [*options*]  Keys/values of the configuration file mfsmaster.cfg:
-#     https://github.com/lizardfs/lizardfs/blob/master/doc/mfsmaster.cfg.5.txt
+# [*options*] keys/values of the configuration file mfsmaster.cfg:
+# https://github.com/lizardfs/lizardfs/blob/master/doc/mfsmaster.cfg.5.txt
 #
-# [*exports*]  A list of mfsexports.cfg lines:
-#     https://github.com/lizardfs/lizardfs/blob/master/doc/mfsexports.cfg.5.txt
+# [*exports*] a list of mfsexports.cfg lines:
+# https://github.com/lizardfs/lizardfs/blob/master/doc/mfsexports.cfg.5.txt
 #
-# [*goals*]  A list mfsgoals.cfg lines:
-#   https://github.com/lizardfs/lizardfs/blob/master/doc/mfsgoals.cfg.5.txt
+# [*goals*] a list mfsgoals.cfg lines:
+# https://github.com/lizardfs/lizardfs/blob/master/doc/mfsgoals.cfg.5.txt
 #
-# [*manage_service*]  start or stop the lizardfs-master service
+# [*manage_service*] True to tell Puppet to start or stop the lizardfs-master
+# service automatically.
 #
 
 class lizardfs::master(
   $ensure = 'present',
   $options = {},
-  $exports = ['*    /    ro'],
+  $exports = [],
   $goals = [],
   $manage_service = true)
 {
@@ -71,7 +72,7 @@ class lizardfs::master(
   }
 
   Package {
-      require => Class['lizardfs']
+    require => Class['lizardfs']
   }
 
   if $::operatingsystem in ['Debian', 'Ubuntu'] {

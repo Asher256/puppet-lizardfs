@@ -1,7 +1,7 @@
 #
 # == Define: lizardfs::chunkserver
 #
-# 'lizardfs::chunkserver': install and configure LizardFS chunkserver
+# 'lizardfs::chunkserver': install and configure a LizardFS chunkserver.
 #
 # This class follows the recommendations of the "Puppet Labs Style Guide":
 # http://docs.puppetlabs.com/guides/style_guide.html . If you want to
@@ -18,12 +18,26 @@
 # === Examples
 #
 # class {'lizardfs::chunkserver':
+#   ensure => present,
 # }
 #
 # === Parameters
 #
-# [*ensure*]  This parameter is passed to the LizardFS Master package.
-#     You can specify: present, absent or the package version
+# [*ensure*] This parameter is passed to the LizardFS Chunkserver package.
+# You can specify: present, absent or the package version
+#
+# [*options*] Keys/values of the configuration file mfschunkserver.cfg
+# https://github.com/lizardfs/lizardfs/blob/master/doc/mfschunkserver.cfg.5.txt
+#
+# [*hdd*] a list of mount points that will:
+#     1. Created automatically by Puppet (thanks to file {})
+#     2. Added to /etc/mfshdd.cfg
+#
+# [*hdd_disabled*] a list of mount points that will be 'marked for removal'.
+# Each mount point will be added to /etc/mfshdd.cfg with an asterisk *
+# before the point point (example: */mount/point).
+# Read this page for more information about this:
+# https://github.com/lizardfs/lizardfs/blob/master/doc/mfshdd.cfg.5.txt
 #
 # [*manage_service*]  start or stop the lizardfs-chunkserver service
 #
@@ -94,11 +108,11 @@ class lizardfs::chunkserver(
 
   if $manage_service {
     service { $service_name :
-      ensure    => running,
-      enable    => true,
-      require   => [Package[$chunkserver_package],
-                    File['/etc/lizardfs/mfschunkserver.cfg'],
-                    File['/etc/lizardfs/mfshdd.cfg']],
+      ensure  => running,
+      enable  => true,
+      require => [Package[$chunkserver_package],
+                  File['/etc/lizardfs/mfschunkserver.cfg'],
+                  File['/etc/lizardfs/mfshdd.cfg']],
     }
   }
 }
