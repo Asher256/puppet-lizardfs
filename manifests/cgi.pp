@@ -30,7 +30,7 @@
 class lizardfs::cgi(
   $ensure = 'present',
   $bind_host = 'localhost',
-  $bind_port,
+  $bind_port = 9425,
   $user = 'nobody',
   $group= 'nogroup',
   $manage_service = true,
