@@ -47,6 +47,14 @@ class lizardfs::cgi(
     require => Class['lizardfs']
   }
 
+  Exec {
+    require => Class['lizardfs']
+  }
+
+  Package {
+    require => Class['lizardfs']
+  }
+
   if $::operatingsystem in ['Debian', 'Ubuntu'] {
     $service_name = 'lizardfs-cgiserv'
     $cgi_package = 'lizardfs-cgi'
@@ -54,16 +62,10 @@ class lizardfs::cgi(
     package { [$cgi_package, $cgi_serv_package]:
       ensure  => present,
     }
-
-    Class['lizardfs']
-    -> Package[$cgi_package]
-    -> Class['lizardfs::install']
   }
   else {
     fail()
   }
-
-  notify {'hello world': }
 
   file { '/etc/default/lizardfs-cgiserv' :
     content => template('lizardfs/etc/default/lizardfs-cgiserv'),
@@ -79,8 +81,6 @@ class lizardfs::cgi(
                     File['/etc/default/lizardfs-cgiserv']],
     }
   }
-
-  include lizardfs::install
 }
 
 # vim:et:sw=2:ts=2:sts=2:tw=0:fenc=utf-8
