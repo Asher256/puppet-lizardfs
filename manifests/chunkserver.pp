@@ -32,6 +32,7 @@ class lizardfs::chunkserver(
   $ensure = 'present',
   $options = {},
   $hdd = [],
+  $hdd_disabled = [],
   $manage_service = true)
 {
   validate_string($ensure)
@@ -70,6 +71,15 @@ class lizardfs::chunkserver(
     fail()
   }
 
+  file { $hdd:
+    ensure  => directory,
+    mode    => '0750',
+    owner   => 'lizardfs',
+    group   => 'lizardfs',
+    require => Package[$chunkserver_package],
+  }
+
+  ->
   file { '/etc/lizardfs/mfschunkserver.cfg' :
     ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
