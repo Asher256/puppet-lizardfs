@@ -40,7 +40,7 @@ class lizardfs::client($ensure = 'present')
   if $::operatingsystem in ['Debian', 'Ubuntu'] {
     $client_package = 'lizardfs-client'
 
-    package { $client_package:
+    package { ['fuse', $client_package]:
       ensure  => present,
     }
   }
