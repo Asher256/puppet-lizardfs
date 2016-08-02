@@ -70,15 +70,6 @@ class lizardfs::chunkserver(
     fail()
   }
 
-  # create the directories were the chunk data is going to be written
-  file { $hdd:
-    ensure  => directory,
-    owner   => 'lizardfs',
-    group   => 'lizardfs',
-    mode    => '0750',
-    require => Package[$chunkserver_package]
-  }
-
   file { '/etc/lizardfs/mfschunkserver.cfg' :
     ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
@@ -97,8 +88,7 @@ class lizardfs::chunkserver(
       enable    => true,
       require   => [Package[$chunkserver_package],
                     File['/etc/lizardfs/mfschunkserver.cfg'],
-                    File['/etc/lizardfs/mfshdd.cfg'],
-                    File[$hdd]],
+                    File['/etc/lizardfs/mfshdd.cfg']],
     }
   }
 }
