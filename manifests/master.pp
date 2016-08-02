@@ -19,28 +19,27 @@
 #
 # class {'lizardfs::master':
 #   ensure  => 'present',
-#
-#   # start or stop the lizardfs-master service
+#   options => {'PERSONALITY' => 'master'},
+#   exports => ['*    /    ro'],
+#   goals => ['1 1 : _'],
 #   manage_service => false,
-#
-#   # The master's "options" keys are referenced here
-#   # https://github.com/lizardfs/lizardfs/blob/master/doc/mfsmaster.cfg.5.txt
-#   options => {'PERSONALITY' => 'master'}
-#
-#   # a list of mfsexports.cfg lines
-#   # https://github.com/lizardfs/lizardfs/blob/master/doc/mfsexports.cfg.5.txt
-#   # By default: ['*    /    ro']    (read only to everyone)
-#   exports => ['address    directory     <options>']
-#
-#   # A list mfsgoals.cfg lines
-#   # https://github.com/lizardfs/lizardfs/blob/master/doc/mfsgoals.cfg.5.txt
-#   goals => ['1 1 : _']
 # }
 #
 # === Parameters
 #
-# [*ensure*]    This parameter is passed to the LizardFS Master package.
-#               You can specify: present, absent or the package version
+# [*ensure*]  This parameter is passed to the LizardFS Master package.
+#     You can specify: present, absent or the package version
+#
+# [*options*]  Keys/values of the configuration file mfsmaster.cfg:
+#     https://github.com/lizardfs/lizardfs/blob/master/doc/mfsmaster.cfg.5.txt
+#
+# [*exports*]  A list of mfsexports.cfg lines:
+#     https://github.com/lizardfs/lizardfs/blob/master/doc/mfsexports.cfg.5.txt
+#
+# [*goals*]  A list mfsgoals.cfg lines:
+#   https://github.com/lizardfs/lizardfs/blob/master/doc/mfsgoals.cfg.5.txt
+#
+# [*manage_service*]  start or stop the lizardfs-master service
 #
 
 class lizardfs::master(
