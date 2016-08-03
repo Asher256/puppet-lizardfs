@@ -32,6 +32,8 @@
 # [*mountpoint*] the directory where the LizardFS will be mounted
 # If this variable is not defined, $name is used to define the local mount point.
 #
+# [*options*] the mfsmount options. Example: "noauto"
+#
 # [*ensure*] 'mount' add the mount point to fstab and mount it automatically
 #            'absent' to remove the mount point
 #            (This variable is passed to mount{})
@@ -42,12 +44,15 @@ define lizardfs::mount(
   $lizardfs_port = 9421,
   $lizardfs_master = 'mfsmaster',
   $mountpoint = undef,
+  $options = undef,
   $ensure = 'mounted',
 )
 {
-  validate_string($lizardfs_master)
   validate_string($lizardfs_subfolder)
+  validate_integer($lizardfs_port)
+  validate_string($lizardfs_master)
   validate_string($mountpoint)
+  validate_string($options)
   validate_string($ensure)
 
   include lizardfs::client
@@ -63,14 +68,20 @@ define lizardfs::mount(
       default => $mountpoint
     }
 
+    $base_options = "mfsmaster=${lizardfs_master},mfsport=${lizardfs_port},mfssubfolder=${lizardfs_subfolder},_netdev"
+    $mount_options = $options ? {
+      undef   => $base_options,
+      default => "${base_options},${options}",
+    }
+
     mount { $real_mountpoint:
-      ensure   => 'mounted',
+      ensure   => $ensure,
       device   => 'mfsmount',
       fstype   => 'fuse',
-      options  => "mfsmaster=${lizardfs_master},mfsport=${lizardfs_port},mfssubfolder=${lizardfs_subfolder},_netdev",
+      options  => $mount_options,
       remounts => false,
-      atboot   => true,
-      require => Class['lizardfs::client'],
+      # atboot   => true,
+      require  => Class['lizardfs::client'],
     }
   }
 }
