@@ -1,5 +1,15 @@
-# mfstopology.cfg(5)
+#############################################################################
+# MANAGED BY PUPPET
+#############################################################################
+<% @topology.each do |line| %>
+<%= line %><% end -%>
 
+#############################################################################
+# Help
+# 
+# mfstopology.cfg(5)
+#############################################################################
+#
 # Server groups can be specified per line with full ip addresses or with
 # netmasks in the following manner:
 #
@@ -30,3 +40,4 @@
 
 # For chunkservers and mounts connecting to the mfs-master that have not been
 # defined in a group, group 0 will be used.
+

@@ -1,8 +1,16 @@
 #############################################################################
 # MANAGED BY PUPPET
 #############################################################################
+<% @hdd.each do |line| %>
+<%= line %><% end -%>
+<% @hdd_disabled.each do |line| %>
+*<%= line %><% end -%>
+
+#############################################################################
+# Help
 # 
 # mfshdd.cfg(5)
+#############################################################################
 # mount points of HDD drives
 #
 # Chunkserver unconditionally initialises given paths with its folder
@@ -19,7 +27,3 @@
 #*/mnt/hd3/lizardfs
 #
 
-<% @hdd.each do |line| %>
-<%= line %><% end -%>
-<% @hdd_disabled.each do |line| %>
-*<%= line %><% end -%>
