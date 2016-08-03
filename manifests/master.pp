@@ -127,7 +127,8 @@ class lizardfs::master(
     service { $service_name :
       ensure  => running,
       enable  => true,
-      require => Package[$master_package],
+      require => [Package[$master_package],
+                  Exec['cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs']]
     }
   }
 }
