@@ -38,6 +38,9 @@
 #
 # [*goals*] a list mfsgoals.cfg lines:
 # https://github.com/lizardfs/lizardfs/blob/master/doc/mfsgoals.cfg.5.txt
+
+# [*topology*] a list mfstopology.cfg lines:
+# https://github.com/lizardfs/lizardfs/blob/master/doc/mfstopology.cfg.5.txt
 #
 # [*manage_service*] True to tell Puppet to start or stop the lizardfs-master
 # service automatically.
@@ -48,6 +51,7 @@ class lizardfs::master(
   $options = {},
   $exports = [],
   $goals = [],
+  $topology = [],
   $manage_service = true)
 {
   validate_string($ensure)
@@ -81,6 +85,10 @@ class lizardfs::master(
     package { $master_package:
       ensure  => present,
     }
+
+    package { 'lizardfs-admin':
+      ensure => present,
+    }
   }
   else {
     fail()
@@ -101,6 +109,12 @@ class lizardfs::master(
   -> file { '/etc/lizardfs/mfsgoals.cfg' :
     ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfsgoals.cfg.erb'),
+    require => [Package[$master_package]],
+  }
+
+  -> file { '/etc/lizardfs/mfstopology.cfg' :
+    ensure  => present,
+    content => template('lizardfs/etc/lizardfs/mfstopology.cfg.erb'),
     require => [Package[$master_package]],
   }
 
