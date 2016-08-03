@@ -86,7 +86,7 @@ class lizardfs::master(
       ensure  => present,
     }
 
-    package { 'lizardfs-admin':
+    package { 'lizardfs-adm':
       ensure => present,
     }
   }
