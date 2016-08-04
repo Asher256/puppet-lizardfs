@@ -107,8 +107,8 @@ class lizardfs::master(
   Package[$master_package]
 
   ->
-  exec { "echo '${first_personality}' >/etc/lizardfs/.mfsmaster_personality.cfg":
-    unless => 'test -f /etc/lizardfs/.mfsmaster_personality.cfg',
+  exec { "echo '${first_personality}' >/etc/lizardfs/.mfsmaster_personality":
+    unless => 'test -f /etc/lizardfs/.mfsmaster_personality',
   }
 
   ->
