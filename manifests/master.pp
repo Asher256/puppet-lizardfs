@@ -18,11 +18,12 @@
 # === Examples
 #
 # class {'lizardfs::master':
-#   ensure  => 'present',
-#   options => {'PERSONALITY' => 'master'},
-#   exports => ['*    /    ro'],
-#   goals => ['1 1 : _'],
-#   manage_service => false,
+#   ensure              => 'present',
+#   first_personality => 'MASTER',
+#   options             => {'PERSONALITY' => 'master'},
+#   exports             => ['*    /    ro'],
+#   goals               => ['1 1 : _'],
+#   manage_service      => false,
 # }
 #
 # === Parameters
@@ -30,7 +31,13 @@
 # [*ensure*] this parameter is passed to the LizardFS Master package.
 # You can specify: present, absent or the package version.
 #
+# [*first_personality*] possible values MASTER or SHADOW. Once the
+# personnality is chosen, it is not going to be overwritten by Puppet.
+# It is the of the high availability tool like Keepalived or Pacemaker.
+#
 # [*options*] keys/values of the configuration file mfsmaster.cfg:
+# All options are permitted EXCEPT the option 'PERSONALITY' because
+# you need to put it on $first_personality
 # https://github.com/lizardfs/lizardfs/blob/master/doc/mfsmaster.cfg.5.txt
 #
 # [*exports*] a list of mfsexports.cfg lines:
@@ -48,6 +55,7 @@
 
 class lizardfs::master(
   $ensure = 'present',
+  $first_personality,
   $options = {},
   $exports = [],
   $goals = [],
@@ -55,9 +63,11 @@ class lizardfs::master(
   $manage_service = true)
 {
   validate_string($ensure)
+  validate_re($first_personality, '^MASTER$|^SHADOW$')
   validate_hash($options)
   validate_array($exports)
   validate_array($goals)
+  validate_array($topology)
   validate_bool($manage_service)
 
   include lizardfs
@@ -94,28 +104,28 @@ class lizardfs::master(
     fail()
   }
 
+  Package[$master_package]
+
+  ->
+  exec { "echo '${first_personality}' >/etc/lizardfs/.mfsmaster_personality.cfg":
+    unless => 'test -f /etc/lizardfs/.mfsmaster_personality.cfg',
+  }
+
+  ->
   file { '/etc/lizardfs/mfsmaster.cfg' :
-    ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfsmaster.cfg.erb'),
-    require => [Package[$master_package]],
   }
 
   -> file { '/etc/lizardfs/mfsexports.cfg' :
-    ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
-    require => [Package[$master_package]],
   }
 
   -> file { '/etc/lizardfs/mfsgoals.cfg' :
-    ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfsgoals.cfg.erb'),
-    require => [Package[$master_package]],
   }
 
   -> file { '/etc/lizardfs/mfstopology.cfg' :
-    ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfstopology.cfg.erb'),
-    require => [Package[$master_package]],
   }
 
   -> exec { 'cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs':
