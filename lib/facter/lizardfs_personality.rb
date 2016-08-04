@@ -8,7 +8,7 @@ require 'facter'
 
 Facter.add('lizardfs_personality') do
   begin
-    content = File.open('/etc/lizardfs/.mfsmaster_personality.cfg', 'r') {|fd| fd.readline.chomp}
+    content = File.open('/etc/lizardfs/.mfsmaster_personality', 'r') {|fd| fd.readline.chomp}
   rescue
     content = nil
   end
