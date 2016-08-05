@@ -112,23 +112,46 @@ class lizardfs::master(
   }
 
   ->
-  file { '/etc/lizardfs/mfsmaster.cfg' :
+  file { '/etc/lizardfs/.mfsmaster.header.cfg' :
     content => template('lizardfs/etc/lizardfs/mfsmaster.cfg.erb'),
   }
 
-  -> file { '/etc/lizardfs/mfsexports.cfg' :
+  ->
+  file { '/etc/lizardfs/switch-mfsmaster.cfg-to':
+    mode    => '0755',
+    content => template('lizardfs/etc/lizardfs/switch-mfsmaster.cfg-to.sh'),
+  }
+
+  ->
+  file { '/etc/lizardfs/.generate-mfsmaster.cfg':
+    mode    => '0755',
+    content => template('lizardfs/etc/lizardfs/generate-mfsmaster.cfg.sh'),
+  }
+
+  ->
+  exec { '/etc/lizardfs/.generate-mfsmaster.cfg':
+    subscribe   => [Exec["echo '${first_personality}' >/etc/lizardfs/.mfsmaster_personality"],
+                    File['/etc/lizardfs/.mfsmaster.header.cfg']],
+    refreshonly => true,
+  }
+
+  ->
+  file { '/etc/lizardfs/mfsexports.cfg' :
     content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
   }
 
-  -> file { '/etc/lizardfs/mfsgoals.cfg' :
+  ->
+  file { '/etc/lizardfs/mfsgoals.cfg' :
     content => template('lizardfs/etc/lizardfs/mfsgoals.cfg.erb'),
   }
 
-  -> file { '/etc/lizardfs/mfstopology.cfg' :
+  ->
+  file { '/etc/lizardfs/mfstopology.cfg' :
     content => template('lizardfs/etc/lizardfs/mfstopology.cfg.erb'),
   }
 
-  -> exec { 'cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs':
+  ->
+  exec { 'cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs':
     unless => 'test -f /var/lib/lizardfs/metadata.mfs',
     user   => 'lizardfs',
   }

@@ -9,7 +9,8 @@ require 'facter'
 Facter.add('lizardfs_personality') do
   begin
     content = File.open('/etc/lizardfs/.mfsmaster_personality', 'r') {|fd| fd.readline.chomp}
-  rescue
+  rescue Errno::ENOENT
+    # the file doesn't exist
     content = nil
   end
 
