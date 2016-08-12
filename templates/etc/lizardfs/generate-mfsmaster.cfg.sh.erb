@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# This script will switch the PERSONALITY=MASTER/SHADOW on
-# and will generate mfsmaster.cfg again, with the new personality.
+# This script will generate <%= @cfgdir %>mfsmaster.cfg
 #
 # Copyright (c) Asher256
 # License: Apache 2.0
@@ -41,31 +40,58 @@ trap 'bash_traceback' ERR
 # propagate ERR trap handler functions, expansions and subshells
 set -o errtrace
 
-main() {
+switch_mfsmastercfg_to() {
+  local personality
+  
+  if ! [ -f '<%= @mfsmaster_personality %>' ]; then
+    echo "ERROR: '<%= @mfsmaster_personality %>' does not exist." >&2
+    exit 1
+  fi
+  
   if [ "$#" -lt 1 ]; then
     echo "Usage: $0 [MASTER|SHADOW]" >&2
-
-  if [ -f /etc/lizardfs/.mfsmaster_personality ]; then
-    local personality
-    personality=$(cat /etc/lizardfs/.mfsmaster_personality)
-
     echo
-    echo "(current personality: $personality)"
-  fi
-
     exit 1
   fi
 
-  if [ "$1" != "MASTER" ] && [ "$1" != "SHADOW" ]; then
-    echo "ERROR: the personality '$1' you provided is wrong." \
+  personality="$1"
+  if [ "$personality" != "MASTER" ] && [ "$personality" != "SHADOW" ]; then
+    echo "ERROR: the personality '$personality' you provided is wrong." \
          "The allowed values: 'MASTER' or 'SHADOW' (in the upper case)." >&2
     exit 1
   fi
 
-  echo "$1" > /etc/lizardfs/.mfsmaster_personality
-  echo "SUCCESS: '/etc/lizardfs/.mfsmaster_personality' switched to $1"
+  echo "$personality" > '<%= @mfsmaster_personality %>'
+  echo "SUCCESS: '<%= @mfsmaster_personality %>' switched to $personality"
 
-  /etc/lizardfs/.generate-mfsmaster.cfg || exit 1
+  <%= @script_generate_mfsmaster %> || exit 1
+
+  exit 0
+}
+
+main() {
+  if [ "$#" -gt 0 ]; then
+    switch_mfsmastercfg_to "$@"
+    exit "$?"
+  fi
+  
+  if ! [ -f '<%= @mfsmaster_personality %>' ]; then
+    echo "ERROR: '<%= @mfsmaster_personality %>' does not exist." >&2
+    exit 1
+  fi
+
+  {
+    local personality
+    personality=$(head -n 1 < '<%= @mfsmaster_personality %>')
+    cat '<%= @mfsmaster_header %>'
+    echo
+    echo '# VARIABLE ADDED FROM <%= @mfsmaster_personality %>'
+    echo "PERSONALITY = $personality"
+  } > '<%= @cfgdir %>mfsmaster.cfg'
+  echo "SUCCESS: '<%= @cfgdir %>mfsmaster.cfg' was generated successfully."
+  
+  personality=$(cat '<%= @mfsmaster_personality %>')
+  echo "(current personality: $personality)"
 
   exit 0
 }
