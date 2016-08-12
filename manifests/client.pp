@@ -33,19 +33,14 @@ class lizardfs::client($ensure = 'present')
 
   include lizardfs
 
-  Package {
+  package { $lizardfs::client_package:
+    ensure  => present,
     require => Class['lizardfs']
   }
 
-  if $::operatingsystem in ['Debian', 'Ubuntu'] {
-    $client_package = 'lizardfs-client'
-
-    package { ['fuse', $client_package]:
-      ensure  => present,
-    }
-  }
-  else {
-    fail()
+  # fuse is needed to mount the partitions
+  package { $lizardfs::fuse_package:
+    ensure  => present,
   }
 }
 

@@ -65,30 +65,21 @@ class lizardfs::cgi(
     require => Class['lizardfs']
   }
 
-  if $::operatingsystem in ['Debian', 'Ubuntu'] {
-    $service_name = 'lizardfs-cgiserv'
-    $cgi_package = 'lizardfs-cgi'
-    $cgi_serv_package = 'lizardfs-cgiserv'
-    package { [$cgi_package, $cgi_serv_package]:
-      ensure  => present,
-    }
-  }
-  else {
-    fail()
+  package { [$lizardfs::cgi_package, $lizardfs::cgiserv_package]:
+    ensure  => present,
   }
 
+  ->
   file { '/etc/default/lizardfs-cgiserv' :
     content => template('lizardfs/etc/default/lizardfs-cgiserv'),
   }
 
   if $manage_service {
-    service { $service_name:
+    service { $lizardfs::cgiserv_service:
       ensure    => running,
       enable    => true,
       subscribe => File['/etc/default/lizardfs-cgiserv'],
-      require   => [Package[$cgi_package],
-                    Package[$cgi_serv_package],
-                    File['/etc/default/lizardfs-cgiserv']],
+      require   => File['/etc/default/lizardfs-cgiserv'],
     }
   }
 }

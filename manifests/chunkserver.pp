@@ -30,16 +30,16 @@
 # https://github.com/lizardfs/lizardfs/blob/master/doc/mfschunkserver.cfg.5.txt
 #
 # [*hdd*] a list of mount points that will:
-#     1. Created automatically by Puppet (thanks to file {})
-#     2. Added to /etc/mfshdd.cfg
+#   1. Created automatically by Puppet (thanks to file {})
+#   2. Added to /etc/lizardfs/mfshdd.cfg
 #
 # [*hdd_disabled*] a list of mount points that will be 'marked for removal'.
-# Each mount point will be added to /etc/mfshdd.cfg with an asterisk *
+# Each mount point will be added to /etc/lizardfs/mfshdd.cfg with an asterisk *
 # before the point point (example: */mount/point).
 # Read this page for more information about this:
 # https://github.com/lizardfs/lizardfs/blob/master/doc/mfshdd.cfg.5.txt
 #
-# [*manage_service*]  start or stop the lizardfs-chunkserver service
+# [*manage_service*] start or stop the lizardfs-chunkserver service
 #
 
 class lizardfs::chunkserver(
@@ -52,6 +52,7 @@ class lizardfs::chunkserver(
   validate_string($ensure)
   validate_hash($options)
   validate_array($hdd)
+  validate_array($hdd_disabled)
   validate_bool($manage_service)
 
   include lizardfs
@@ -62,57 +63,47 @@ class lizardfs::chunkserver(
     require => Class['lizardfs']
   }
 
-  File {
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0644',
-    require => Class['lizardfs']
-  }
-
   Package {
     require => Class['lizardfs']
   }
 
-  if $::operatingsystem in ['Debian', 'Ubuntu'] {
-    $service_name = 'lizardfs-chunkserver'
-    $chunkserver_package = 'lizardfs-chunkserver'
-
-    package { $chunkserver_package:
-      ensure  => present,
-    }
-  }
-  else {
-    fail()
+  File {
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    require => Class['lizardfs'],
   }
 
+  package { $lizardfs::chunkserver_package:
+    ensure  => present,
+  }
+
+  ->
   file { $hdd:
     ensure  => directory,
     mode    => '0750',
     owner   => 'lizardfs',
     group   => 'lizardfs',
-    require => Package[$chunkserver_package],
   }
 
   ->
-  file { '/etc/lizardfs/mfschunkserver.cfg' :
+  file { "${lizardfs::cfgdir}mfschunkserver.cfg":
     ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
-    require => Package[$chunkserver_package],
   }
 
-  file { '/etc/lizardfs/mfshdd.cfg' :
+  ->
+  file { "${lizardfs::cfgdir}mfshdd.cfg":
     ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfshdd.cfg.erb'),
-    require => Package[$chunkserver_package],
   }
 
   if $manage_service {
-    service { $service_name :
+    service { $lizardfs::chunkserver_service:
       ensure  => running,
       enable  => true,
-      require => [Package[$chunkserver_package],
-                  File['/etc/lizardfs/mfschunkserver.cfg'],
-                  File['/etc/lizardfs/mfshdd.cfg']],
+      require => [File["${lizardfs::cfgdir}mfschunkserver.cfg"],
+                  File["${lizardfs::cfgdir}mfshdd.cfg"]],
     }
   }
 }

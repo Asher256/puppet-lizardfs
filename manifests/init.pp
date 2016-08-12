@@ -22,7 +22,33 @@
 #
 
 class lizardfs() {
-  if ! ($operatingsystem in ['Debian', 'Ubuntu']) {
+  $cfgdir = '/etc/lizardfs/'    # Always put '/' in the end
+  validate_re($cfgdir, '/$')
+
+  if $::operatingsystem in ['Debian', 'Ubuntu'] {
+    # Chunkserver
+    $chunkserver_package = 'lizardfs-chunkserver'
+    $chunkserver_service = 'lizardfs-chunkserver'
+
+    # CGI
+    $cgiserv_package = 'lizardfs-cgiserv'
+    $cgiserv_service= 'lizardfs-cgiserv'
+    $cgi_package = 'lizardfs-cgi'
+
+    # Client
+    $client_package = 'lizardfs-client'
+    $fuse_package = 'fuse'
+
+    # Master
+    $master_service = 'lizardfs-master'
+    $master_package = 'lizardfs-master'
+    $adm_package = 'lizardfs-adm'
+
+    # Metalogger
+    $metalogger_service = 'lizardfs-metalogger'
+    $metalogger_package = 'lizardfs-metalogger'
+  }
+  else {
     fail("The operating system '$operatingsystem' is not supported by 'puppet-lizardfs'.")
   }
 }

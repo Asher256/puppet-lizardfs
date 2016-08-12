@@ -48,39 +48,25 @@ class lizardfs::metalogger(
 
   include lizardfs
 
-  File {
+  package { $lizardfs::metalogger_package:
+    ensure  => present,
+    require => Class['lizardfs']
+  }
+
+  file { "${lizardfs::cfgdir}/mfsmetalogger.cfg":
+    ensure  => present,
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    require => Class['lizardfs']
-  }
-
-  Package {
-    require => Class['lizardfs']
-  }
-
-  if $::operatingsystem in ['Debian', 'Ubuntu'] {
-    $service_name = 'lizardfs-metalogger'
-    $metalogger_package = 'lizardfs-metalogger'
-    package { $metalogger_package:
-      ensure  => present,
-    }
-  }
-  else {
-    fail()
-  }
-
-  file { '/etc/lizardfs/mfsmetalogger.cfg' :
-    ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfsmetalogger.cfg.erb'),
     require => Package[$metalogger_package],
   }
 
   if $manage_service {
-    service { $service_name :
+    service { $lizardfs::metalogger_service:
       ensure  => running,
       enable  => true,
-      require => File['/etc/lizardfs/mfsmetalogger.cfg'],
+      require => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
     }
   }
 }

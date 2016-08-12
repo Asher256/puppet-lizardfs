@@ -19,7 +19,7 @@
 #
 # class {'lizardfs::master':
 #   ensure              => 'present',
-#   first_personality => 'MASTER',
+#   first_personality   => 'MASTER',
 #   options             => {'PERSONALITY' => 'master'},
 #   exports             => ['*    /    ro'],
 #   goals               => ['1 1 : _'],
@@ -72,92 +72,83 @@ class lizardfs::master(
 
   include lizardfs
 
+  Package {
+    require => Class['lizardfs']
+  }
+
   Exec {
     user => 'root',
     path => '/bin:/sbin:/usr/bin:/usr/sbin',
-    require => Class['lizardfs']
+    require => [Class['lizardfs'],
+                Package[$lizardfs::master_package]]
   }
 
   File {
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    require => Class['lizardfs']
+    require => [Class['lizardfs'],
+                Package[$lizardfs::master_package]]
   }
 
-  Package {
-    require => Class['lizardfs']
+  # Packages
+  package { $lizardfs::master_package:
+    ensure  => present,
   }
 
-  if $::operatingsystem in ['Debian', 'Ubuntu'] {
-    $service_name = 'lizardfs-master'
-    $master_package = 'lizardfs-master'
-    package { $master_package:
-      ensure  => present,
-    }
-
-    package { 'lizardfs-adm':
-      ensure => present,
-    }
-  }
-  else {
-    fail()
+  package { $lizardfs::adm_package:
+    ensure => present,
   }
 
-  Package[$master_package]
+  # $cfgdir is set because some templates use it (like the script generate-mfsmaster.cfg)
+  $cfgdir = $lizardfs::cfgdir
+  $script_generate_mfsmaster = "${lizardfs::cfgdir}generate-mfsmaster.cfg"
 
-  ->
-  exec { "echo '${first_personality}' >/etc/lizardfs/.mfsmaster_personality":
-    unless => 'test -f /etc/lizardfs/.mfsmaster_personality',
+  # /etc/lizardfs/mfsmaster.cfg is generated with $script_generate_mfsmaster
+  # $script_generate_mfsmaster will do this:
+  #   1. cat $mfsmaster_header > /etc/lizardfs/mfsmaster.cfg
+  #   2. echo "PERSONALITY=$(cat $mfsmaster_personality)"
+  $mfsmaster_header = "${lizardfs::cfgdir}.mfsmaster.header.cfg"
+  $mfsmaster_personality = "${lizardfs::cfgdir}.mfsmaster_personality"
+
+  exec { $script_generate_mfsmaster:
+    refreshonly => true,
+    subscribe   => File[$mfsmaster_header],
+    require     => File[$script_generate_mfsmaster],
   }
 
-  ->
-  file { '/etc/lizardfs/.mfsmaster.header.cfg' :
+  exec { "echo '${first_personality}' >'${mfsmaster_personality}'":
+    unless  => "test -f '${mfsmaster_personality}'",
+  }
+
+  -> file { $mfsmaster_header:
     content => template('lizardfs/etc/lizardfs/mfsmaster.cfg.erb'),
   }
 
-  ->
-  file { '/etc/lizardfs/switch-mfsmaster.cfg-to':
+  -> file { $script_generate_mfsmaster:
     mode    => '0755',
-    content => template('lizardfs/etc/lizardfs/switch-mfsmaster.cfg-to.sh'),
+    content => template('lizardfs/etc/lizardfs/generate-mfsmaster.cfg.sh.erb'),
   }
 
-  ->
-  file { '/etc/lizardfs/.generate-mfsmaster.cfg':
-    mode    => '0755',
-    content => template('lizardfs/etc/lizardfs/generate-mfsmaster.cfg.sh'),
-  }
-
-  ->
-  exec { '/etc/lizardfs/.generate-mfsmaster.cfg':
-    subscribe   => [Exec["echo '${first_personality}' >/etc/lizardfs/.mfsmaster_personality"],
-                    File['/etc/lizardfs/.mfsmaster.header.cfg']],
-    refreshonly => true,
-  }
-
-  ->
-  file { '/etc/lizardfs/mfsexports.cfg' :
+  -> file { "${lizardfs::cfgdir}mfsexports.cfg":
     content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
   }
 
-  ->
-  file { '/etc/lizardfs/mfsgoals.cfg' :
+  -> file { "${lizardfs::cfgdir}mfsgoals.cfg":
     content => template('lizardfs/etc/lizardfs/mfsgoals.cfg.erb'),
   }
 
-  ->
-  file { '/etc/lizardfs/mfstopology.cfg' :
+  -> file { "${lizardfs::cfgdir}mfstopology.cfg":
     content => template('lizardfs/etc/lizardfs/mfstopology.cfg.erb'),
   }
 
-  ->
-  exec { 'cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs':
+  -> exec { 'cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs':
     unless => 'test -f /var/lib/lizardfs/metadata.mfs',
     user   => 'lizardfs',
   }
 
   if $manage_service {
-    service { $service_name :
+    service { $lizardfs::master_service:
       ensure  => running,
       enable  => true,
       require => [Package[$master_package],
