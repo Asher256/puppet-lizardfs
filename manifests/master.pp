@@ -84,33 +84,31 @@ class lizardfs::master(
   Exec {
     user => 'root',
     path => '/bin:/sbin:/usr/bin:/usr/sbin',
-    require => [Class['lizardfs'],
-                Package[$lizardfs::master_package]]
+    require => Package[$::lizardfs::master_package],
   }
 
   File {
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    require => [Class['lizardfs'],
-                Package[$lizardfs::master_package]]
+    require => Package[$::lizardfs::master_package],
   }
 
   Service {
-    require => Package[$lizardfs::master_package],
+    require => Package[$::lizardfs::master_package],
   }
 
   # Packages
-  package { $lizardfs::master_package:
+  package { $::lizardfs::master_package:
     ensure  => present,
   }
 
-  package { $lizardfs::adm_package:
+  package { $::lizardfs::adm_package:
     ensure => present,
   }
 
   # $cfgdir is set because some templates use it (like the script generate-mfsmaster.cfg)
-  $cfgdir = $lizardfs::cfgdir
+  $cfgdir = $::lizardfs::cfgdir
   $script_generate_mfsmaster = "${lizardfs::cfgdir}generate-mfsmaster-cfg.sh"
 
   # /etc/lizardfs/mfsmaster.cfg is generated with $script_generate_mfsmaster
@@ -119,6 +117,16 @@ class lizardfs::master(
   #   2. echo "PERSONALITY=$(cat $mfsmaster_personality)"
   $mfsmaster_header = "${lizardfs::cfgdir}.mfsmaster.header.cfg"
   $mfsmaster_personality = "${lizardfs::cfgdir}.mfsmaster_personality"
+
+  if $::osfamily == 'RedHat' {
+    $metadata_file = '/var/lib/mfs/metadata.mfs'
+  }
+  elsif $::osfamily == 'Debian' {
+    $metadata_file = '/var/lib/lizardfs/metadata.mfs'
+  }
+  else {
+    fail("Your operating system ${::operatingsystem} is not supported by the class lizardfs::master")
+  }
 
   exec { $script_generate_mfsmaster:
     refreshonly => true,
@@ -155,15 +163,15 @@ class lizardfs::master(
     notify  => Exec['mfsmaster reload']
   }
 
-  -> exec { 'cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs':
-    unless => 'test -f /var/lib/lizardfs/metadata.mfs',
-    user   => 'lizardfs',
+  -> exec { "cp ${metadata_file}.empty ${metadata_file}":
+    unless => "test -f '${metadata_file}'",
+    user   => $::lizardfs::user,
   }
 
   if $manage_service {
-    Exec['cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs']
+    Exec["cp ${metadata_file}.empty ${metadata_file}"]
 
-    -> service { $lizardfs::master_service:
+    -> service { $::lizardfs::master_service:
       ensure => running,
       enable => true,
     }
@@ -174,7 +182,7 @@ class lizardfs::master(
     }
   }
   else {
-    Exec['cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs']
+    Exec["cp ${metadata_file}.empty ${metadata_file}"]
 
     # will do nothing if we choose to not manage the service
     -> exec { 'mfsmaster reload':

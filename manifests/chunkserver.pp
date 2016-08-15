@@ -72,19 +72,19 @@ class lizardfs::chunkserver(
     group   => 'root',
     mode    => '0644',
     require => [Class['lizardfs'],
-                Package[$lizardfs::chunkserver_package]],
+                Package[$::lizardfs::chunkserver_package]],
     notify  => Exec['mfschunkserver reload']
   }
 
-  package { $lizardfs::chunkserver_package:
+  package { $::lizardfs::chunkserver_package:
     ensure => present,
   }
 
   file { $hdd:
     ensure => directory,
     mode   => '0750',
-    owner  => 'lizardfs',
-    group  => 'lizardfs',
+    owner  => $::lizardfs::user,
+    group  => $::lizardfs::group,
   }
 
   file { "${lizardfs::cfgdir}mfschunkserver.cfg":
@@ -100,7 +100,7 @@ class lizardfs::chunkserver(
     -> File["${lizardfs::cfgdir}mfschunkserver.cfg"]
     -> File["${lizardfs::cfgdir}mfshdd.cfg"]
 
-    -> service { $lizardfs::chunkserver_service:
+    -> service { $::lizardfs::chunkserver_service:
       ensure => running,
       enable => true,
     }

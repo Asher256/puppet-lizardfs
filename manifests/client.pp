@@ -33,13 +33,13 @@ class lizardfs::client($ensure = 'present')
 
   include lizardfs
 
-  package { $lizardfs::client_package:
+  package { $::lizardfs::client_package:
     ensure  => present,
     require => Class['lizardfs']
   }
 
   # fuse is needed to mount the partitions
-  package { $lizardfs::fuse_package:
+  package { $::lizardfs::fuse_package:
     ensure  => present,
   }
 }

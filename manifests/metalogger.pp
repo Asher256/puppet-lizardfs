@@ -59,23 +59,23 @@ class lizardfs::metalogger(
     group   => 'root',
     mode    => '0644',
     require => [Class['lizardfs'],
-                Package[$lizardfs::metalogger_package]],
+                Package[$::lizardfs::metalogger_package]],
     notify  => Exec['mfschunkserver reload']
   }
 
-  package { $lizardfs::metalogger_package:
+  package { $::lizardfs::metalogger_package:
     ensure  => present,
     require => Class['lizardfs']
   }
 
   file { "${lizardfs::cfgdir}/mfsmetalogger.cfg":
     content => template('lizardfs/etc/lizardfs/mfsmetalogger.cfg.erb'),
-    require => Package[$lizardfs::metalogger_package],
+    require => Package[$::lizardfs::metalogger_package],
     notify  => Exec['mfsmetalogger reload']
   }
 
   if $manage_service {
-    service { $lizardfs::metalogger_service:
+    service { $::lizardfs::metalogger_service:
       ensure  => running,
       enable  => true,
       require => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
