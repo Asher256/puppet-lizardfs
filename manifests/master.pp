@@ -50,6 +50,9 @@
 # [*topology*] a list mfstopology.cfg lines:
 # https://github.com/lizardfs/lizardfs/blob/master/doc/mfstopology.cfg.5.txt
 #
+# [*globaliolimits*] a list globaliolimits.cfg lines:
+# https://github.com/lizardfs/lizardfs/blob/master/doc/globaliolimits.cfg.5.txt
+#
 # [*manage_service*] True to tell Puppet to start or stop the lizardfs-master
 # service automatically.
 #
@@ -61,6 +64,7 @@ class lizardfs::master(
   $options = {},
   $goals = [],
   $topology = [],
+  $globaliolimits = [],
   $manage_service = true)
 {
   validate_string($ensure)
@@ -69,6 +73,7 @@ class lizardfs::master(
   validate_hash($options)
   validate_array($goals)
   validate_array($topology)
+  validate_array($globaliolimits)
   validate_bool($manage_service)
 
   if has_key(upcase($options), 'PERSONALITY') {
@@ -160,6 +165,11 @@ class lizardfs::master(
 
   -> file { "${lizardfs::cfgdir}mfstopology.cfg":
     content => template('lizardfs/etc/lizardfs/mfstopology.cfg.erb'),
+    notify  => Exec['mfsmaster reload']
+  }
+
+  -> file { "${lizardfs::cfgdir}globaliolimits.cfg":
+    content => template('lizardfs/etc/lizardfs/globaliolimits.cfg.erb'),
     notify  => Exec['mfsmaster reload']
   }
 
