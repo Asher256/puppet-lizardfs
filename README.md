@@ -2,6 +2,7 @@
 
 - Author: Asher256
 - Github repository: https://github.com/Asher256/puppet-lizardfs
+- Puppet Forge page: https://forge.puppet.com/Asher256/lizardfs/readme
 
 #### Table of Contents
 
