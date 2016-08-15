@@ -40,16 +40,13 @@ class {'lizardfs::master':
 
 To configure the chunkserver:
 ```
-class {'lizardfs::chunkserver':
-  ensure => present,
-}
-```
-
-Don't forget to add the host mfsmaster on all servers (chunkservers, shadows,
-etc.):
-```
 host { 'mfsmaster':
   ip => 'x.x.x.x',
+}
+
+->
+class {'lizardfs::chunkserver':
+  ensure => present,
 }
 ```
 

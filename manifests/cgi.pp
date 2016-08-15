@@ -72,6 +72,7 @@ class lizardfs::cgi(
   ->
   file { '/etc/default/lizardfs-cgiserv' :
     content => template('lizardfs/etc/default/lizardfs-cgiserv'),
+    notify  => Service[$lizardfs::cgiserv_service],
   }
 
   if $manage_service {

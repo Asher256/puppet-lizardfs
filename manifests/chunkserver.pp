@@ -24,13 +24,13 @@
 # === Parameters
 #
 # [*ensure*] This parameter is passed to the LizardFS Chunkserver package.
-# You can specify: present, absent or the package version
+# You can specify: present, absent or the package version.
 #
 # [*options*] Keys/values of the configuration file mfschunkserver.cfg
 # https://github.com/lizardfs/lizardfs/blob/master/doc/mfschunkserver.cfg.5.txt
 #
 # [*hdd*] a list of mount points that will:
-#   1. Created automatically by Puppet (thanks to file {})
+#   1. Created automatically by Puppet (with file {})
 #   2. Added to /etc/lizardfs/mfshdd.cfg
 #
 # [*hdd_disabled*] a list of mount points that will be 'marked for removal'.
@@ -71,39 +71,53 @@ class lizardfs::chunkserver(
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    require => Class['lizardfs'],
+    require => [Class['lizardfs'],
+                Package[$lizardfs::chunkserver_package]],
+    notify  => Exec['mfschunkserver reload']
   }
 
   package { $lizardfs::chunkserver_package:
-    ensure  => present,
+    ensure => present,
   }
 
-  ->
   file { $hdd:
-    ensure  => directory,
-    mode    => '0750',
-    owner   => 'lizardfs',
-    group   => 'lizardfs',
+    ensure => directory,
+    mode   => '0750',
+    owner  => 'lizardfs',
+    group  => 'lizardfs',
   }
 
-  ->
   file { "${lizardfs::cfgdir}mfschunkserver.cfg":
-    ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
   }
 
-  ->
   file { "${lizardfs::cfgdir}mfshdd.cfg":
-    ensure  => present,
     content => template('lizardfs/etc/lizardfs/mfshdd.cfg.erb'),
   }
 
   if $manage_service {
-    service { $lizardfs::chunkserver_service:
-      ensure  => running,
-      enable  => true,
-      require => [File["${lizardfs::cfgdir}mfschunkserver.cfg"],
-                  File["${lizardfs::cfgdir}mfshdd.cfg"]],
+    File[$hdd]
+    -> File["${lizardfs::cfgdir}mfschunkserver.cfg"]
+    -> File["${lizardfs::cfgdir}mfshdd.cfg"]
+
+    -> service { $lizardfs::chunkserver_service:
+      ensure => running,
+      enable => true,
+    }
+
+    -> exec { 'mfschunkserver reload':
+      command     => 'mfschunkserver reload',
+      refreshonly => true,
+    }
+  }
+  else {
+    File[$hdd]
+    -> File["${lizardfs::cfgdir}mfschunkserver.cfg"]
+    -> File["${lizardfs::cfgdir}mfshdd.cfg"]
+
+    -> exec { 'mfschunkserver reload':
+      command     => 'true',
+      refreshonly => true,
     }
   }
 }

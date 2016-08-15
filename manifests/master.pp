@@ -19,11 +19,11 @@
 #
 # class {'lizardfs::master':
 #   ensure              => 'present',
-#   first_personality   => 'MASTER',
-#   options             => {'PERSONALITY' => 'master'},
 #   exports             => ['*    /    ro'],
+#   first_personality   => 'MASTER',
+#   options             => {},
 #   goals               => ['1 1 : _'],
-#   manage_service      => false,
+#   manage_service      => true,
 # }
 #
 # === Parameters
@@ -32,8 +32,9 @@
 # You can specify: present, absent or the package version.
 #
 # [*first_personality*] possible values MASTER or SHADOW. Once the
-# personnality is chosen, it is not going to be overwritten by Puppet.
-# It is the of the high availability tool like Keepalived or Pacemaker.
+# personnality is chosen, it is not going to be overwritten by Puppet again.
+# Why? Because the personality is supposed to be changed by a failover
+# script started by keepalived or Pacemaker.
 #
 # [*options*] keys/values of the configuration file mfsmaster.cfg:
 # All options are permitted EXCEPT the option 'PERSONALITY' because
@@ -45,7 +46,7 @@
 #
 # [*goals*] a list mfsgoals.cfg lines:
 # https://github.com/lizardfs/lizardfs/blob/master/doc/mfsgoals.cfg.5.txt
-
+#
 # [*topology*] a list mfstopology.cfg lines:
 # https://github.com/lizardfs/lizardfs/blob/master/doc/mfstopology.cfg.5.txt
 #
@@ -56,19 +57,23 @@
 class lizardfs::master(
   $ensure = 'present',
   $first_personality,
+  $exports,
   $options = {},
-  $exports = [],
   $goals = [],
   $topology = [],
   $manage_service = true)
 {
   validate_string($ensure)
   validate_re($first_personality, '^MASTER$|^SHADOW$')
-  validate_hash($options)
   validate_array($exports)
+  validate_hash($options)
   validate_array($goals)
   validate_array($topology)
   validate_bool($manage_service)
+
+  if has_key(upcase($options), 'PERSONALITY') {
+    fail('It is forbidden to modify the personality of LizardFS Master with key PERSONALITY in \'lizardfs::master::options\'. Use \'lizardfs::master::first_personality\' to set the first personality.')
+  }
 
   include lizardfs
 
@@ -91,6 +96,10 @@ class lizardfs::master(
                 Package[$lizardfs::master_package]]
   }
 
+  Service {
+    require => Package[$lizardfs::master_package],
+  }
+
   # Packages
   package { $lizardfs::master_package:
     ensure  => present,
@@ -102,7 +111,7 @@ class lizardfs::master(
 
   # $cfgdir is set because some templates use it (like the script generate-mfsmaster.cfg)
   $cfgdir = $lizardfs::cfgdir
-  $script_generate_mfsmaster = "${lizardfs::cfgdir}generate-mfsmaster.cfg"
+  $script_generate_mfsmaster = "${lizardfs::cfgdir}generate-mfsmaster-cfg.sh"
 
   # /etc/lizardfs/mfsmaster.cfg is generated with $script_generate_mfsmaster
   # $script_generate_mfsmaster will do this:
@@ -115,6 +124,7 @@ class lizardfs::master(
     refreshonly => true,
     subscribe   => File[$mfsmaster_header],
     require     => File[$script_generate_mfsmaster],
+    notify      => Exec['mfsmaster reload']
   }
 
   exec { "echo '${first_personality}' >'${mfsmaster_personality}'":
@@ -132,14 +142,17 @@ class lizardfs::master(
 
   -> file { "${lizardfs::cfgdir}mfsexports.cfg":
     content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
+    notify  => Exec['mfsmaster reload']
   }
 
   -> file { "${lizardfs::cfgdir}mfsgoals.cfg":
     content => template('lizardfs/etc/lizardfs/mfsgoals.cfg.erb'),
+    notify  => Exec['mfsmaster reload']
   }
 
   -> file { "${lizardfs::cfgdir}mfstopology.cfg":
     content => template('lizardfs/etc/lizardfs/mfstopology.cfg.erb'),
+    notify  => Exec['mfsmaster reload']
   }
 
   -> exec { 'cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs':
@@ -148,11 +161,26 @@ class lizardfs::master(
   }
 
   if $manage_service {
-    service { $lizardfs::master_service:
-      ensure  => running,
-      enable  => true,
-      require => [Package[$master_package],
-                  Exec['cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs']]
+    Exec['cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs']
+
+    -> service { $lizardfs::master_service:
+      ensure => running,
+      enable => true,
+    }
+
+    -> exec { 'mfsmaster reload':
+      command     => 'mfsmaster reload',
+      refreshonly => true,
+    }
+  }
+  else {
+    Exec['cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs']
+
+    # will do nothing if we choose to not manage the service
+    -> exec { 'mfsmaster reload':
+      command     => 'true',
+      refreshonly => true,
+      require     => Exec['cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs'],
     }
   }
 }
