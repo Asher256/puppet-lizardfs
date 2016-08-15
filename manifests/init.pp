@@ -22,10 +22,25 @@
 #
 
 class lizardfs() {
-  $cfgdir = '/etc/lizardfs/'    # Always put '/' in the end
-  validate_re($cfgdir, '/$')
+  if $::osfamily == 'RedHat' or $::osfamily == 'Debian' {
+    if $::osfamily == 'RedHat' {
+      $user = 'mfs'
+      $group = 'mfs'
 
-  if $::operatingsystem in ['Debian', 'Ubuntu'] {
+      $cfgdir = '/etc/mfs/'    # Always put '/' in the end
+      validate_re($cfgdir, '/$')
+    }
+    elsif $::osfamily == 'Debian' {
+      $user = 'lizardfs'
+      $group = 'lizardfs'
+
+      $cfgdir = '/etc/lizardfs/'    # Always put '/' in the end
+      validate_re($cfgdir, '/$')
+    }
+    else {
+      fail()
+    }
+
     # Chunkserver
     $chunkserver_package = 'lizardfs-chunkserver'
     $chunkserver_service = 'lizardfs-chunkserver'
@@ -50,6 +65,15 @@ class lizardfs() {
   }
   else {
     fail("The operating system '$operatingsystem' is not supported by 'puppet-lizardfs'.")
+  }
+
+  # create the cfgdir (/etc/lizardfs on Debian, /etc/mfs/ on RedHat/CentOS)
+  file { $cfgdir:
+    ensure  => directory,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0755',
+    require => undef,
   }
 }
 

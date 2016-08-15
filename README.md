@@ -6,7 +6,7 @@
 #### Table of Contents
 
 1. [Overview](#overview)
-2. [Github repository](#github-repository)
+2. [Example](#example)
 2. [Requirements](#requirements)
 4. [Contribute](#contribute)
 
@@ -19,7 +19,7 @@ LizardFS is an open source distributed file system, highly available, scalable
 and ready to use.
 
 You can configure with puppet-lizardfs:
-- The LizardFS master (ready for High-availability with tools like keepalived)
+- The LizardFS master (ready for High-availability with tools like keepalived or Pacemaker)
 - The LizardFS chunkserver
 - The LizardFS metalogger
 - The LizardFS client and mount points
@@ -50,11 +50,36 @@ class {'lizardfs::chunkserver':
 }
 ```
 
+To configure the metalogger:
+```
+host { 'mfsmaster':
+  ip => 'x.x.x.x',
+}
+
+->
+class {'lizardfs::metalogger':
+  ensure => present,
+}
+```
+
+To mount a LizardFS mount point:
+```
+lizardfs::mount {'/mnt/':
+  lizardfs_subfolder => '/',
+}
+```
+
 ## Requirements
 
-- Operating system: Debian Linux
+- Operating system: Debian, Ubuntu, CentOS, RedHat
 
-(Please contribute to make your operating system supported!)
+On Ubuntu and Debian, puppet-lizardfs works out of the box. On CentOS you will need to 
+add the LizardFS repository manually:
+```
+curl http://packages.lizardfs.com/lizardfs.key > /etc/pki/rpm-gpg/RPM-GPG-KEY-LizardFS
+curl http://packages.lizardfs.com/yum/el7/lizardfs.repo > /etc/yum.repos.d/lizardfs.repo
+yum update
+```
 
 ## Contribute
 

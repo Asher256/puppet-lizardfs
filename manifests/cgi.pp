@@ -65,18 +65,18 @@ class lizardfs::cgi(
     require => Class['lizardfs']
   }
 
-  package { [$lizardfs::cgi_package, $lizardfs::cgiserv_package]:
+  package { [$::lizardfs::cgi_package, $::lizardfs::cgiserv_package]:
     ensure  => present,
   }
 
   ->
   file { '/etc/default/lizardfs-cgiserv' :
     content => template('lizardfs/etc/default/lizardfs-cgiserv'),
-    notify  => Service[$lizardfs::cgiserv_service],
+    notify  => Service[$::lizardfs::cgiserv_service],
   }
 
   if $manage_service {
-    service { $lizardfs::cgiserv_service:
+    service { $::lizardfs::cgiserv_service:
       ensure    => running,
       enable    => true,
       subscribe => File['/etc/default/lizardfs-cgiserv'],
