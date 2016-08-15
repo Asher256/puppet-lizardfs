@@ -48,18 +48,30 @@ class lizardfs::metalogger(
 
   include lizardfs
 
+  Exec {
+    user => 'root',
+    path => '/bin:/sbin:/usr/bin:/usr/sbin',
+    require => Class['lizardfs']
+  }
+
+  File {
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    require => [Class['lizardfs'],
+                Package[$lizardfs::metalogger_package]],
+    notify  => Exec['mfschunkserver reload']
+  }
+
   package { $lizardfs::metalogger_package:
     ensure  => present,
     require => Class['lizardfs']
   }
 
   file { "${lizardfs::cfgdir}/mfsmetalogger.cfg":
-    ensure  => present,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0644',
     content => template('lizardfs/etc/lizardfs/mfsmetalogger.cfg.erb'),
-    require => Package[$metalogger_package],
+    require => Package[$lizardfs::metalogger_package],
+    notify  => Exec['mfsmetalogger reload']
   }
 
   if $manage_service {
@@ -67,6 +79,18 @@ class lizardfs::metalogger(
       ensure  => running,
       enable  => true,
       require => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
+    }
+
+    -> exec { 'mfsmetalogger reload':
+      command     => 'mfsmetalogger reload',
+      refreshonly => true,
+    }
+  }
+  else {
+    exec { 'mfsmetalogger reload':
+      command     => 'true',
+      refreshonly => true,
+      require     => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
     }
   }
 }
