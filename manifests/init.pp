@@ -64,7 +64,7 @@ class lizardfs() {
     $metalogger_package = 'lizardfs-metalogger'
   }
   else {
-    fail("The operating system '$operatingsystem' is not supported by 'puppet-lizardfs'.")
+    fail("The operating system '$operatingsystem' is not supported by the module 'lizardfs'.")
   }
 
   # create the cfgdir (/etc/lizardfs on Debian, /etc/mfs/ on RedHat/CentOS)
