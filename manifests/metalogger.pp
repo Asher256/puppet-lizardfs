@@ -64,7 +64,7 @@ class lizardfs::metalogger(
   }
 
   package { $::lizardfs::metalogger_package:
-    ensure  => present,
+    ensure  => $ensure,
     require => Class['lizardfs']
   }
 

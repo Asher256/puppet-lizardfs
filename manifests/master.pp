@@ -29,9 +29,11 @@
 # === Parameters
 #
 # [*ensure*] this parameter is passed to the LizardFS Master package.
-# You can specify: present, absent or the package version.
+# You can specify: present, absent or the package version
+# (for example if the package is lizardfs-master-3.10.0-0el7.x86_64.rpm,
+# then: ensure => '3.10.0-0el7').
 #
-# [*first_personality*] possible values MASTER or SHADOW. Once the
+# [*first_personality*] possible values HA-CLUSTER-MANAGED, MASTER or SHADOW. Once the
 # personnality is chosen, it is not going to be overwritten by Puppet again.
 # Why? Because the personality is supposed to be changed by a failover
 # script started by keepalived or Pacemaker.
@@ -68,7 +70,7 @@ class lizardfs::master(
   $manage_service = true)
 {
   validate_string($ensure)
-  validate_re($first_personality, '^MASTER$|^SHADOW$')
+  validate_re($first_personality, '^MASTER$|^SHADOW$|^HA-CLUSTER-MANAGED$')
   validate_array($exports)
   validate_hash($options)
   validate_array($goals)
@@ -76,8 +78,10 @@ class lizardfs::master(
   validate_array($globaliolimits)
   validate_bool($manage_service)
 
-  if has_key(upcase($options), 'PERSONALITY') {
-    fail('It is forbidden to modify the personality of LizardFS Master with key PERSONALITY in \'lizardfs::master::options\'. Use \'lizardfs::master::first_personality\' to set the first personality.')
+  $options_keys = upcase(keys($options))
+
+  if 'PERSONALITY' in $options_keys {
+    fail('It is forbidden to modify the personality of the LizardFS Master with "lizardfs::master::options[\'PERSONALITY\']". Use \'lizardfs::master::first_personality\' to set the first personality.')
   }
 
   include lizardfs
@@ -105,11 +109,11 @@ class lizardfs::master(
 
   # Packages
   package { $::lizardfs::master_package:
-    ensure  => present,
+    ensure  => $ensure,
   }
 
   package { $::lizardfs::adm_package:
-    ensure => present,
+    ensure => $ensure,
   }
 
   # $cfgdir is set because some templates use it (like the script generate-mfsmaster.cfg)
@@ -123,7 +127,10 @@ class lizardfs::master(
   $mfsmaster_header = "${lizardfs::cfgdir}.mfsmaster.header.cfg"
   $mfsmaster_personality = "${lizardfs::cfgdir}.mfsmaster_personality"
 
-  if $::osfamily == 'RedHat' {
+  if 'DATA_PATH' in $options_keys {
+    $metadata_file = "${options[DATA_PATH]}/metadata.mfs"
+  }
+  elsif $::osfamily == 'RedHat' {
     $metadata_file = '/var/lib/mfs/metadata.mfs'
   }
   elsif $::osfamily == 'Debian' {
@@ -196,7 +203,7 @@ class lizardfs::master(
 
     # will do nothing if we choose to not manage the service
     -> exec { 'mfsmaster reload':
-      command     => 'true',
+      command     => 'true', # lint:ignore:quoted_booleans
       refreshonly => true,
       require     => Exec['cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs'],
     }

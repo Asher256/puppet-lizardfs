@@ -77,7 +77,7 @@ class lizardfs::chunkserver(
   }
 
   package { $::lizardfs::chunkserver_package:
-    ensure => present,
+    ensure => $ensure,
   }
 
   file { $hdd:
@@ -116,7 +116,7 @@ class lizardfs::chunkserver(
     -> File["${lizardfs::cfgdir}mfshdd.cfg"]
 
     -> exec { 'mfschunkserver reload':
-      command     => 'true',
+      command     => 'true',    # lint:ignore:quoted_booleans
       refreshonly => true,
     }
   }

@@ -47,6 +47,11 @@ class lizardfs::cgi(
 )
 {
   validate_string($ensure)
+  validate_string($bind_host)
+  validate_re($bind_port, '^\d+$')
+  validate_string($user)
+  validate_string($group)
+  validate_bool($manage_service)
 
   include lizardfs
 
@@ -66,7 +71,7 @@ class lizardfs::cgi(
   }
 
   package { [$::lizardfs::cgi_package, $::lizardfs::cgiserv_package]:
-    ensure  => present,
+    ensure  => $ensure,
   }
 
   ->

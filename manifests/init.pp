@@ -27,8 +27,17 @@ class lizardfs() {
       $user = 'mfs'
       $group = 'mfs'
 
-      $cfgdir = '/etc/mfs/'    # Always put '/' in the end
-      validate_re($cfgdir, '/$')
+      $cfgdir = '/etc/mfs/'       # Always put '/' in the end
+      validate_re($cfgdir, '/$')  # check if the '/' is present in $cfgdir
+
+      if $::operatingsystem == 'CentOS' {
+        yumrepo { 'lizardfs':
+            baseurl  => "http://packages.lizardfs.com/yum/centos${::operatingsystemmajrelease}/",
+            descr    => 'LizardFS Packages',
+            enabled  => 1,
+            gpgcheck => 0,
+        }
+      }
     }
     elsif $::osfamily == 'Debian' {
       $user = 'lizardfs'
@@ -64,7 +73,7 @@ class lizardfs() {
     $metalogger_package = 'lizardfs-metalogger'
   }
   else {
-    fail("The operating system '$operatingsystem' is not supported by the module 'lizardfs'.")
+    fail("The operating system '${::operatingsystem}' is not supported by the module 'lizardfs'.")
   }
 
   # create the cfgdir (/etc/lizardfs on Debian, /etc/mfs/ on RedHat/CentOS)
