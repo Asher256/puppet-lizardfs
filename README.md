@@ -94,13 +94,7 @@ mfsmaster restart        # RESTART is needed to switch from MASTER to SHADOW
 
 - Operating system: Debian, Ubuntu, CentOS, RedHat
 
-On Ubuntu and Debian, puppet-lizardfs works out of the box. On CentOS you will need to
-add the LizardFS repository manually:
-```
-curl http://packages.lizardfs.com/lizardfs.key > /etc/pki/rpm-gpg/RPM-GPG-KEY-LizardFS
-curl http://packages.lizardfs.com/yum/el7/lizardfs.repo > /etc/yum.repos.d/lizardfs.repo
-yum update
-```
+On CentOS, Ubuntu and Debian, puppet-lizardfs works out of the box.
 
 ## Contribute
 
