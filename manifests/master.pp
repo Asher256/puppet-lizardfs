@@ -63,8 +63,10 @@
 # [*manage_service*] True to tell Puppet to start or stop the lizardfs-master
 # service automatically.
 #
-# [*data_path*] (optional) the directory where the LizardFS Master is stored.
-# It is the equivalent of DATA_PATH on mfsmaster.cfg.
+# [*data_path*] (optional) the directory where the LizardFS Master's data is
+# stored. It is the equivalent of DATA_PATH on mfsmaster.cfg.
+# More informations about DATA_PATH can be found in this page:
+# https://github.com/lizardfs/lizardfs/blob/master/doc/mfsmaster.cfg.5.txt
 #
 
 class lizardfs::master(
