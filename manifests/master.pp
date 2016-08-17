@@ -39,8 +39,13 @@
 # script started by keepalived or Pacemaker.
 #
 # [*options*] keys/values of the configuration file mfsmaster.cfg:
-# All options are permitted EXCEPT the option 'PERSONALITY' because
-# you need to put it on $first_personality
+# ALL options need to be in the UPPER CASE.
+# All options are permitted EXCEPT:
+#   1. The option 'PERSONALITY' because you need to put it in
+#        the argument $first_personality
+#   2. The option 'DATA_PATH' (you can change it with the argument "$data_path".
+#
+# Documentation about the options of mfsmaster.cfg:
 # https://github.com/lizardfs/lizardfs/blob/master/doc/mfsmaster.cfg.5.txt
 #
 # [*exports*] a list of mfsexports.cfg lines:
@@ -58,6 +63,9 @@
 # [*manage_service*] True to tell Puppet to start or stop the lizardfs-master
 # service automatically.
 #
+# [*data_path*] (optional) the directory where the LizardFS Master is stored.
+# It is the equivalent of DATA_PATH on mfsmaster.cfg.
+#
 
 class lizardfs::master(
   $ensure = 'present',
@@ -67,7 +75,9 @@ class lizardfs::master(
   $goals = [],
   $topology = [],
   $globaliolimits = [],
-  $manage_service = true)
+  $manage_service = true,
+  $data_path = undef,
+)
 {
   validate_string($ensure)
   validate_re($first_personality, '^MASTER$|^SHADOW$|^HA-CLUSTER-MANAGED$')
@@ -78,10 +88,17 @@ class lizardfs::master(
   validate_array($globaliolimits)
   validate_bool($manage_service)
 
-  $options_keys = upcase(keys($options))
+  if $data_path != undef {
+    validate_absolute_path($data_path)
+  }
 
+  $options_keys = upcase(keys($options))
   if 'PERSONALITY' in $options_keys {
     fail('It is forbidden to modify the personality of the LizardFS Master with "lizardfs::master::options[\'PERSONALITY\']". Use \'lizardfs::master::first_personality\' to set the first personality.')
+  }
+
+  if 'DATA_PATH' in $options_keys {
+    fail('To modify DATA_PATH use the argument "lizardfs::master::data_path" instead of "lizardfs::master::options[\'data_path\']".')
   }
 
   include lizardfs
@@ -127,18 +144,40 @@ class lizardfs::master(
   $mfsmaster_header = "${lizardfs::cfgdir}.mfsmaster.header.cfg"
   $mfsmaster_personality = "${lizardfs::cfgdir}.mfsmaster_personality"
 
-  if 'DATA_PATH' in $options_keys {
-    $metadata_file = "${options[DATA_PATH]}/metadata.mfs"
-  }
-  elsif $::osfamily == 'RedHat' {
-    $metadata_file = '/var/lib/mfs/metadata.mfs'
+  #
+  # The default metadata dir and $data_path management
+  # The data_path will be stored in: $final_data_path
+  #
+  if $::osfamily == 'RedHat' {
+    $default_data_path = '/var/lib/mfs'
   }
   elsif $::osfamily == 'Debian' {
-    $metadata_file = '/var/lib/lizardfs/metadata.mfs'
+    $default_data_path = '/var/lib/lizardfs'
   }
   else {
     fail("Your operating system ${::operatingsystem} is not supported by the class lizardfs::master")
   }
+
+  if $data_path == undef {
+    # final_data_path = the default one (chosen by the package manager)
+    $metadata_file = "${default_data_path}/metadata.mfs"
+    $final_data_path = $default_data_path
+  }
+  else {
+    # final_data_path = $data_path argument (chosen by the user
+    $metadata_file = "${data_path}/metadata.mfs"
+    $final_data_path = $data_path
+  }
+
+  file { $final_data_path:
+    ensure => directory,
+    owner  => $::lizardfs::user,
+    group  => $::lizardfs::group,
+    mode   => $::lizardfs::secure_dir_permission,
+  }
+
+  # metadata.mfs.empty is always stored in the default_data_path
+  $metadata_file_empty = "${default_data_path}/metadata.mfs.empty"
 
   exec { $script_generate_mfsmaster:
     refreshonly => true,
@@ -180,13 +219,14 @@ class lizardfs::master(
     notify  => Exec['mfsmaster reload']
   }
 
-  -> exec { "cp ${metadata_file}.empty ${metadata_file}":
-    unless => "test -f '${metadata_file}'",
-    user   => $::lizardfs::user,
+  -> exec { "cp '${metadata_file_empty}' '${metadata_file}'":
+    unless  => "test -f '${metadata_file}'",
+    user    => $::lizardfs::user,
+    require => File[$final_data_path],
   }
 
   if $manage_service {
-    Exec["cp ${metadata_file}.empty ${metadata_file}"]
+    Exec["cp '${metadata_file_empty}' '${metadata_file}'"]
 
     -> service { $::lizardfs::master_service:
       ensure => running,
@@ -199,13 +239,12 @@ class lizardfs::master(
     }
   }
   else {
-    Exec["cp ${metadata_file}.empty ${metadata_file}"]
+    Exec["cp '${metadata_file_empty}' '${metadata_file}'"]
 
     # will do nothing if we choose to not manage the service
     -> exec { 'mfsmaster reload':
       command     => 'true', # lint:ignore:quoted_booleans
       refreshonly => true,
-      require     => Exec['cp /var/lib/lizardfs/metadata.mfs.empty /var/lib/lizardfs/metadata.mfs'],
     }
   }
 }

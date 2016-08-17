@@ -49,7 +49,7 @@ define lizardfs::mount(
 )
 {
   validate_string($lizardfs_subfolder)
-  validate_integer($lizardfs_port)
+  validate_re($lizardfs_port, '^\d+$')
   validate_string($lizardfs_master)
   validate_string($mountpoint)
   validate_string($options)

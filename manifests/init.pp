@@ -22,6 +22,10 @@
 #
 
 class lizardfs() {
+  # by default, the data_dir (Master) and Metalogger files can be read only by
+  # LizardFS user + LizardFS group
+  $secure_dir_permission = '0750'
+
   if $::osfamily == 'RedHat' or $::osfamily == 'Debian' {
     if $::osfamily == 'RedHat' {
       $user = 'mfs'
