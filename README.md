@@ -54,16 +54,15 @@ class {'lizardfs::chunkserver':
 
 To mount a LizardFS mount point:
 ```
-# FYI: the host "mfsmaster" need to be set, like the chunkserver example below
 lizardfs::mount {'/mnt/':
   lizardfs_subfolder => '/',
+  lizardfs_master    => 'x.x.x.x',   # the IP / host of the LizardFS Master
 }
 ```
 
 To configure the metalogger:
 ```
 # FYI: the host "mfsmaster" need to be set, like the chunkserver example below
-lizardfs::mount {'/mnt/':
 class {'lizardfs::metalogger':
   ensure => present,
 }
