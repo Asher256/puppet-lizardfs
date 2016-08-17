@@ -44,9 +44,9 @@
 
 class lizardfs::chunkserver(
   $ensure = 'present',
-  $options = {},
   $hdd = [],
   $hdd_disabled = [],
+  $options = {},
   $manage_service = true)
 {
   validate_string($ensure)
@@ -54,6 +54,10 @@ class lizardfs::chunkserver(
   validate_array($hdd)
   validate_array($hdd_disabled)
   validate_bool($manage_service)
+
+  if empty($hdd) and empty($hdd_disabled) {
+    fail('You need to add at least one directory to the array \'lizardfs::chunkserver::hdd\' OR \'lizardfs::chunkserver::hdd_disabled\'.')
+  }
 
   include lizardfs
 
@@ -82,7 +86,7 @@ class lizardfs::chunkserver(
 
   file { $hdd:
     ensure => directory,
-    mode   => '0750',
+    mode   => $::lizardfs::secure_dir_permission,
     owner  => $::lizardfs::user,
     group  => $::lizardfs::group,
   }
