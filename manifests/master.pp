@@ -293,6 +293,103 @@ class lizardfs::master(
       require     => Exec["echo -n 'MFSM NEW' > '${metadata_file}'"],
     }
   }
+
+### To enable pacemaker you need to set the FQDNs of the nodes like: $pacemaker_quorum_members =>  [master.lfs, shadow.lfs],
+### and the VIP for lfs master service like: options => { MASTER_HOST => "192.168.1.xxx", }
+if $enable_pacemaker {
+  if ! empty($pacemaker_quorum_members) {
+    if is_ip_address($options[MASTER_HOST]) and $options[ADMIN_PASSWORD] {
+      class { 'corosync':
+        enable_secauth       => true,
+        authkey              => "/var/lib/puppet/ssl/certs/ca.pem",
+        bind_address         => "$ipaddress",
+        multicast_address    => "239.1.1.2",
+        manage_pcsd_service  => true,
+        #debug               => true,
+        set_votequorum       => true,
+        #            pacemaker_quorum_members      => $pacemaker_quorum_members,
+        votequorum_expected_votes => 2,
+      }
+      corosync::service { 'pacemaker':
+        version => '0',
+      }
+      cs_property { 'stonith-enabled' :
+        value   => 'false',
+        cib     => 'puppet'
+        }~> Cs_commit['puppet']
+        cs_property { 'no-quorum-policy' :
+          value   => 'ignore',
+          cib     => 'puppet'
+          }~> Cs_commit['puppet']
+          cs_primitive { 'lizardfs-master':
+            primitive_class => 'ocf',
+            provided_by     => 'lizardfs',
+            primitive_type  => 'metadataserver',
+            parameters      => { 'master_cfg' => "${cfgdir}mfsmaster.cfg" },
+            metadata        => { 'clone-node-max' => '1', 'master-max' => '1', 'master-node-max' => '1', 'notify' => 'true', 'target-role' => 'Master'},
+            operations      => {
+              'monitor' => { role => 'Master', 'interval' => '1s', 'timeout' => '30s' },
+              'monitor' => { role => 'Slave', 'interval' => '2s', 'timeout' => '40s' },
+              'start'   => { 'interval' => '0', 'timeout' => '1800s' },
+              'stop'    => { 'interval' => '0', 'timeout' => '1800s' },
+              'promote' => { 'interval' => '0', 'timeout' => '1800s' },
+              'demote'  => { 'interval' => '0', 'timeout' => '1800s' },
+            },
+            promotable         => 'true',
+            cib                => 'puppet'
+            }~> Cs_commit['puppet']
+            cs_primitive { 'Failover-IP':
+              primitive_class => 'ocf',
+              provided_by     => 'heartbeat',
+              primitive_type  => 'IPaddr2',
+              parameters      => { 'ip' => "${options[MASTER_HOST]}", 'cidr_netmask' => '24' },
+              operations      => { 'monitor' => { 'interval' => '1s' }, },
+              cib             => 'puppet'
+              }~> Cs_commit['puppet']
+
+              # cs_rsc_defaults { 'resource-stickiness' :
+              #    value => '100',
+              #    cib   => 'puppet'
+              #  }~> Cs_commit['puppet']
+              cs_colocation { 'ip_with_master':
+                primitives => [
+                  ['Failover-IP', 'ms_lizardfs-master:Master'],
+                  ],
+                  cib        => 'puppet'
+                  }~> Cs_commit['puppet']
+
+                  cs_order { 'master-after-ip':
+                    first   => 'Failover-IP:start',
+                    second  => 'ms_lizardfs-master:promote',
+                    require => Cs_colocation['ip_with_master'],
+                    cib     => 'puppet'
+                    }~> Cs_commit['puppet']
+
+                    cs_shadow {
+                      'puppet':
+                    }
+                    cs_commit {
+                      'puppet':
+                    }
+                    file { 'lizardfs.ocf.folder':
+                      path    => '/usr/lib/ocf/resource.d/lizardfs/',
+                      ensure  => directory,
+                      mode    => 755,
+                      require => Package['pacemaker'],
+                      }->
+                      file { 'lizardfs.ocf':
+                        path    => '/usr/lib/ocf/resource.d/lizardfs/metadataserver',
+                        ensure  => file,
+                        mode    => 755,
+                        content => template("lizardfs/lizardfs.ocf"),
+                        before  => Service['pacemaker'],
+                      }
+    }
+    else {
+      fail('You need to set the virtual IP and the admin password for the LizardFS Master. Example: lizardfs::master::options => {\'MASTER_HOST\' => \'192.168.1.xx\', ADMIN_PASSWORD => \'passwd\' }')
+    }
+  }
+}
 }
 
 # vim:et:sw=2:ts=2:sts=2:tw=0:fenc=utf-8
