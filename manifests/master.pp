@@ -148,6 +148,7 @@ class lizardfs::master(
 
   #
   # The default metadata dir and $data_path management
+  # The data_path will be stored in: $final_data_path
   #
   if $::osfamily == 'RedHat' {
     $default_data_path = '/var/lib/mfs'
@@ -160,10 +161,21 @@ class lizardfs::master(
   }
 
   if $data_path == undef {
+    # final_data_path = the default one (chosen by the package manager)
     $metadata_file = "${default_data_path}/metadata.mfs"
+    $final_data_path = $default_data_path
   }
   else {
+    # final_data_path = $data_path argument (chosen by the user
     $metadata_file = "${data_path}/metadata.mfs"
+    $final_data_path = $data_path
+  }
+
+  file { $final_data_path:
+    ensure => directory,
+    owner  => $::lizardfs::user,
+    group  => $::lizardfs::group,
+    mode   => $::lizardfs::secure_dir_permission,
   }
 
   # metadata.mfs.empty is always stored in the default_data_path
@@ -212,6 +224,7 @@ class lizardfs::master(
   -> exec { "cp '${metadata_file_empty}' '${metadata_file}'":
     unless  => "test -f '${metadata_file}'",
     user    => $::lizardfs::user,
+    require => File[$final_data_path],
   }
 
   if $manage_service {
