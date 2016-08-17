@@ -344,7 +344,7 @@ class lizardfs::master(
       parameters      => { 'master_cfg' => "${cfgdir}mfsmaster.cfg" },
       metadata        => { 'clone-node-max' => '1', 'master-max' => '1', 'master-node-max' => '1', 'notify' => 'true', 'target-role' => 'Master'},
       promotable      => 'true',
-      cib             => 'puppet'
+      cib             => 'puppet',
       operations      => {
         'monitor' => { role => 'Master', 'interval' => '1s', 'timeout' => '30s' },
         'monitor' => { role => 'Slave', 'interval' => '2s', 'timeout' => '40s' },
