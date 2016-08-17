@@ -3,4 +3,4 @@
 
 # Contributors
 
-- Chioralia Florin (yum and DATA_PATH support in lizardfs::master)
+- Chioralia Florin (yum repository and DATA_PATH support in lizardfs::master)
