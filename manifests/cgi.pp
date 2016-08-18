@@ -48,10 +48,16 @@ class lizardfs::cgi(
 {
   validate_string($ensure)
   validate_string($bind_host)
-  validate_re($bind_port, '^\d+$')
+  # validate_re($bind_port, '^\d+$')
   validate_string($user)
   validate_string($group)
   validate_bool($manage_service)
+
+  # I put the condition 'if ! is_integer()' because validate_integer() and
+  # validate_re() failed in CentOS 7.
+  if ! is_integer($bind_port) {
+    fail('lizardfs::cgi::bind_port must be an integer')
+  }
 
   include lizardfs
 
