@@ -49,15 +49,15 @@ switch_mfsmastercfg_to() {
   fi
   
   if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 [MASTER|SHADOW]" >&2
+    echo "Usage: $0 [MASTER|SHADOW|HA-CLUSTER-MANAGED]" >&2
     echo
     exit 1
   fi
 
   personality="$1"
-  if [ "$personality" != "MASTER" ] && [ "$personality" != "SHADOW" ]; then
+  if [ "$personality" != "MASTER" ] && [ "$personality" != "SHADOW" ] && [ "$personality" != "HA-CLUSTER-MANAGED" ]; then
     echo "ERROR: the personality '$personality' you provided is wrong." \
-         "The allowed values: 'MASTER' or 'SHADOW' (in the upper case)." >&2
+         "The allowed values: 'MASTER' or 'SHADOW' or 'HA-CLUSTER-MANAGED' (in the upper case)." >&2
     exit 1
   fi
 
