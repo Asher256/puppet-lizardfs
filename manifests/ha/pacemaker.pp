@@ -58,11 +58,11 @@ class lizardfs::ha::pacemaker(
     }
   }
 
-  if ! is_ip_address( $multicast_address ) {
+  if ! is_ip_address($multicast_address) {
     fail('The multicast_address is not a valid IP address.')
   }
 
-  if ! is_ip_address( $lizardfs::master::options[MASTER_HOST] ) {
+  if ! is_ip_address($lizardfs::master::options[MASTER_HOST]) {
     fail('Set the virtual IP for HA lfs master service like: options => { MASTER_HOST => "192.168.1.xxx", }.')
   }
 
@@ -80,10 +80,10 @@ class lizardfs::ha::pacemaker(
     bind_address               => $ipaddress,
     multicast_address          => $multicast_address,
     manage_pcsd_service        => true,
-    #debug                     => true,
+    # debug                      => true,
     set_votequorum             => true,
     quorum_members             => $quorum_members,
-    #votequorum_expected_votes  => 2,
+    # votequorum_expected_votes  => 2,
     require                    => Class['lizardfs::master'],
   }
 
@@ -94,78 +94,78 @@ class lizardfs::ha::pacemaker(
   cs_property { 'stonith-enabled' :
     value   => 'false',
     cib     => 'puppet'
-    } ~> Cs_commit['puppet']
+  } ~> Cs_commit['puppet']
 
-    cs_property { 'no-quorum-policy' :
-      value   => 'ignore',
-      cib     => 'puppet'
-    } ~> Cs_commit['puppet']
+  cs_property { 'no-quorum-policy' :
+    value   => 'ignore',
+    cib     => 'puppet'
+  } ~> Cs_commit['puppet']
 
-    cs_primitive { 'lizardfs-master':
-      primitive_class => 'ocf',
-      provided_by     => 'lizardfs',
-      primitive_type  => 'metadataserver',
-      parameters      => { 'master_cfg' => "${cfgdir}mfsmaster.cfg" },
-      metadata        => { 'clone-node-max' => '1', 'master-max' => '1', 'master-node-max' => '1', 'notify' => 'true', 'target-role' => 'Master'},
-      promotable      => 'true',
-      cib             => 'puppet',
-      operations      => {
-        'monitor' => { role => 'Master', 'interval' => '1s', 'timeout' => '30s' },
-        'monitor' => { role => 'Slave', 'interval' => '2s', 'timeout' => '40s' },
-        'start'   => { 'interval' => '0', 'timeout' => '1800s' },
-        'stop'    => { 'interval' => '0', 'timeout' => '1800s' },
-        'promote' => { 'interval' => '0', 'timeout' => '1800s' },
-        'demote'  => { 'interval' => '0', 'timeout' => '1800s' },
-      },
-    } ~> Cs_commit['puppet']
+  cs_primitive { 'lizardfs-master':
+    primitive_class => 'ocf',
+    provided_by     => 'lizardfs',
+    primitive_type  => 'metadataserver',
+    parameters      => { 'master_cfg' => "${cfgdir}mfsmaster.cfg" },
+    metadata        => { 'clone-node-max' => '1', 'master-max' => '1', 'master-node-max' => '1', 'notify' => 'true', 'target-role' => 'Master'},
+    promotable      => 'true',
+    cib             => 'puppet',
+    operations      => {
+      'monitor' => { role => 'Master', 'interval' => '1s', 'timeout' => '30s' },
+      'monitor' => { role => 'Slave', 'interval' => '2s', 'timeout' => '40s' },
+      'start'   => { 'interval' => '0', 'timeout' => '1800s' },
+      'stop'    => { 'interval' => '0', 'timeout' => '1800s' },
+      'promote' => { 'interval' => '0', 'timeout' => '1800s' },
+      'demote'  => { 'interval' => '0', 'timeout' => '1800s' },
+    },
+  } ~> Cs_commit['puppet']
 
-    cs_primitive { 'Failover-IP':
-      primitive_class => 'ocf',
-      provided_by     => 'heartbeat',
-      primitive_type  => 'IPaddr2',
-      parameters      => { 'ip' => "${lizardfs::master::options[MASTER_HOST]}", 'cidr_netmask' => '24' },
-      operations      => { 'monitor' => { 'interval' => '1s' }, },
-      cib             => 'puppet'
-    }~> Cs_commit['puppet']
+  cs_primitive { 'Failover-IP':
+    primitive_class => 'ocf',
+    provided_by     => 'heartbeat',
+    primitive_type  => 'IPaddr2',
+    parameters      => { 'ip' => "${lizardfs::master::options[MASTER_HOST]}", 'cidr_netmask' => '24' },
+    operations      => { 'monitor' => { 'interval' => '1s' }, },
+    cib             => 'puppet'
+  }~> Cs_commit['puppet']
 
-    # cs_rsc_defaults { 'resource-stickiness' :
-    #    value => '100',
-    #    cib   => 'puppet'
-    #  }~> Cs_commit['puppet']
+  # cs_rsc_defaults { 'resource-stickiness' :
+  #    value => '100',
+  #    cib   => 'puppet'
+  #  }~> Cs_commit['puppet']
 
-    cs_colocation { 'ip_with_master':
-      primitives => [ ['Failover-IP', 'ms_lizardfs-master:Master'], ],
-      cib        => 'puppet'
-    } ~> Cs_commit['puppet']
+  cs_colocation { 'ip_with_master':
+    primitives => [ ['Failover-IP', 'ms_lizardfs-master:Master'], ],
+    cib        => 'puppet'
+  } ~> Cs_commit['puppet']
 
-    cs_order { 'master-after-ip':
-      first   => 'Failover-IP:start',
-      second  => 'ms_lizardfs-master:promote',
-      require => Cs_colocation['ip_with_master'],
-      cib     => 'puppet'
-    } ~> Cs_commit['puppet']
+  cs_order { 'master-after-ip':
+    first   => 'Failover-IP:start',
+    second  => 'ms_lizardfs-master:promote',
+    require => Cs_colocation['ip_with_master'],
+    cib     => 'puppet'
+  } ~> Cs_commit['puppet']
 
-    cs_shadow {
-      'puppet':
-    }
+  cs_shadow {
+    'puppet':
+  }
 
-    cs_commit {
-      'puppet':
-    }
+  cs_commit {
+    'puppet':
+  }
 
-    file { 'lizardfs.ocf.folder':
-      path    => '/usr/lib/ocf/resource.d/lizardfs/',
-      ensure  => directory,
-      mode    => 755,
-      require => Package['pacemaker'],
-    }
-    -> file { 'lizardfs.ocf':
-      path    => '/usr/lib/ocf/resource.d/lizardfs/metadataserver',
-      ensure  => file,
-      mode    => 755,
-      content => template("lizardfs/lizardfs.ocf"),
-      before  => Service['pacemaker'],
-    }
+  file { 'lizardfs.ocf.folder':
+    path    => '/usr/lib/ocf/resource.d/lizardfs/',
+    ensure  => directory,
+    mode    => 755,
+    require => Package['pacemaker'],
+  }
+  -> file { 'lizardfs.ocf':
+    path    => '/usr/lib/ocf/resource.d/lizardfs/metadataserver',
+    ensure  => file,
+    mode    => 755,
+    content => template("lizardfs/lizardfs.ocf"),
+    before  => Service['pacemaker'],
+  }
 }
 
 # vim:et:sw=2:ts=2:sts=2:tw=0:fenc=utf-8
