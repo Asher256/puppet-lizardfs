@@ -49,7 +49,7 @@ class lizardfs::ha::pacemaker(
 )
 {
   if $::osfamily == 'RedHat' {
-    yumrepo { "centos-base":
+    yumrepo { "centos-base-lizardfs":
       mirrorlist => "http://mirrorlist.centos.org/?release=$operatingsystemmajrelease&arch=\$basearch&repo=os",
       descr => "CentOS-$operatingsystemmajrelease - Base",
       enabled => 1,
