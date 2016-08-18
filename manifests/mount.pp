@@ -58,7 +58,7 @@ define lizardfs::mount(
   # I put the condition 'if ! is_integer()' because validate_integer() and
   # validate_re() failed in CentOS 7.
   if ! is_integer($lizardfs_port) {
-    fail('lizardfs::cgi::bind_port must be an integer')
+    fail('lizardfs::mount::lizardfs_port must be an integer')
   }
 
   include lizardfs::client
