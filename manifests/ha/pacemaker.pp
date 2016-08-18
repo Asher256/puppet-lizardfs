@@ -126,7 +126,7 @@ class lizardfs::ha::pacemaker(
     parameters      => { 'ip' => "${lizardfs::master::options[MASTER_HOST]}", 'cidr_netmask' => '24' },
     operations      => { 'monitor' => { 'interval' => '1s' }, },
     cib             => 'puppet'
-  }~> Cs_commit['puppet']
+  } ~> Cs_commit['puppet']
 
   # cs_rsc_defaults { 'resource-stickiness' :
   #    value => '100',
