@@ -49,17 +49,11 @@ define lizardfs::mount(
 )
 {
   validate_string($lizardfs_subfolder)
-  # validate_re($lizardfs_port, '^\d+$')
+  validate_integer($lizardfs_port)
   validate_string($lizardfs_master)
   validate_string($mountpoint)
   validate_string($options)
   validate_string($ensure)
-
-  # I put the condition 'if ! is_integer()' because validate_integer() and
-  # validate_re() failed in CentOS 7.
-  if ! is_integer($lizardfs_port) {
-    fail('lizardfs::mount::lizardfs_port must be an integer')
-  }
 
   include lizardfs::client
 
