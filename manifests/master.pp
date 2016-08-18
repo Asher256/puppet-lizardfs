@@ -328,14 +328,12 @@ class lizardfs::master(
     cs_property { 'stonith-enabled' :
       value   => 'false',
       cib     => 'puppet'
-    }
-    ~> Cs_commit['puppet']
+    }~> Cs_commit['puppet']
 
     cs_property { 'no-quorum-policy' :
     value   => 'ignore',
     cib     => 'puppet'
-    }
-    ~> Cs_commit['puppet']
+    }~> Cs_commit['puppet']
 
     cs_primitive { 'lizardfs-master':
       primitive_class => 'ocf',
@@ -353,8 +351,7 @@ class lizardfs::master(
         'promote' => { 'interval' => '0', 'timeout' => '1800s' },
         'demote'  => { 'interval' => '0', 'timeout' => '1800s' },
       },
-    }
-    ~> Cs_commit['puppet']
+    }~> Cs_commit['puppet']
 
     cs_primitive { 'Failover-IP':
       primitive_class => 'ocf',
@@ -363,8 +360,7 @@ class lizardfs::master(
       parameters      => { 'ip' => "${options[MASTER_HOST]}", 'cidr_netmask' => '24' },
       operations      => { 'monitor' => { 'interval' => '1s' }, },
       cib             => 'puppet'
-    }
-    ~> Cs_commit['puppet']
+    }~> Cs_commit['puppet']
 
     # cs_rsc_defaults { 'resource-stickiness' :
     #    value => '100',
@@ -374,23 +370,20 @@ class lizardfs::master(
     cs_colocation { 'ip_with_master':
       primitives => [ ['Failover-IP', 'ms_lizardfs-master:Master'], ],
       cib        => 'puppet'
-    }
-    ~> Cs_commit['puppet']
+    }~> Cs_commit['puppet']
 
     cs_order { 'master-after-ip':
       first   => 'Failover-IP:start',
       second  => 'ms_lizardfs-master:promote',
       require => Cs_colocation['ip_with_master'],
       cib     => 'puppet'
-    }
-    ~> Cs_commit['puppet']
+    }~> Cs_commit['puppet']
 
     cs_shadow {
       'puppet':
     }
-
     cs_commit {
-    ' puppet':
+      'puppet':
     }
 
     file { 'lizardfs.ocf.folder':
