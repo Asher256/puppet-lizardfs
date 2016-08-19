@@ -223,7 +223,6 @@ class lizardfs::master(
     }
 
     -> exec { 'mfsmaster reload':
-      command     => 'mfsmaster reload',
       refreshonly => true,
     }
   }
