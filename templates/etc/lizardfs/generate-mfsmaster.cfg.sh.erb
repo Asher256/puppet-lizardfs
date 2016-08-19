@@ -90,7 +90,7 @@ main() {
   } > '<%= @cfgdir %>mfsmaster.cfg'
   echo "SUCCESS: '<%= @cfgdir %>mfsmaster.cfg' was generated successfully."
   
-  personality=$(cat '<%= @mfsmaster_personality %>')
+  personality=$(head -n 1 < '<%= @mfsmaster_personality %>')
   echo "(current personality: $personality)"
 
   exit 0
