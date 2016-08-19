@@ -106,7 +106,7 @@ class lizardfs::ha::pacemaker(
     primitive_class => 'ocf',
     provided_by     => 'lizardfs',
     primitive_type  => 'metadataserver',
-    parameters      => { 'master_cfg' => "${cfgdir}mfsmaster.cfg" },
+    parameters      => { 'master_cfg' => "${::lizardfs::cfgdir}mfsmaster.cfg" },
     metadata        => { 'clone-node-max' => '1', 'master-max' => '1', 'master-node-max' => '1', 'notify' => 'true', 'target-role' => 'Master'},
     promotable      => 'true',
     cib             => 'puppet',
