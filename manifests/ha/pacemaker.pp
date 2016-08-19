@@ -79,6 +79,7 @@ class lizardfs::ha::pacemaker(
     authkey                    => "/var/lib/puppet/ssl/certs/ca.pem",
     bind_address               => $ipaddress,
     multicast_address          => $multicast_address,
+    package_pcs                => true,
     manage_pcsd_service        => true,
     # debug                      => true,
     set_votequorum             => true,
