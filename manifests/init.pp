@@ -34,14 +34,13 @@ class lizardfs() {
       $cfgdir = '/etc/mfs/'       # Always put '/' in the end
       validate_re($cfgdir, '/$')  # check if the '/' is present in $cfgdir
 
-      if $::operatingsystem == 'CentOS' {
-        yumrepo { 'lizardfs':
-            baseurl  => "http://packages.lizardfs.com/yum/centos${::operatingsystemmajrelease}/",
+      yumrepo { 'lizardfs':
+            baseurl  => "http://packages.lizardfs.com/yum/el${::operatingsystemmajrelease}/",
             descr    => 'LizardFS Packages',
             enabled  => 1,
             gpgcheck => 0,
-        }
       }
+      
     }
     elsif $::osfamily == 'Debian' {
       $user = 'lizardfs'
