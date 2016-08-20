@@ -30,6 +30,10 @@
 #
 
 class lizardfs($manage_repos = true) {
+  Package {
+    require => Exec['apt_update']
+  }
+
   # Because the Debian package is different than the Debian package
   # from packages.lizardfs.org, we will unify the user with Puppet
   $master_data_path = '/var/lib/lizardfs'

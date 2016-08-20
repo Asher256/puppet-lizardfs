@@ -141,6 +141,7 @@ class lizardfs::master(
   # $script_generate_mfsmaster will do this:
   #   1. cat $mfsmaster_header > /etc/lizardfs/mfsmaster.cfg
   #   2. echo "PERSONALITY=$(cat $mfsmaster_personality)"
+  $mfsmaster_cfg = "${lizardfs::cfgdir}mfsmaster.cfg"
   $mfsmaster_header = "${lizardfs::cfgdir}.mfsmaster.header.cfg"
   $mfsmaster_personality = "${lizardfs::cfgdir}.mfsmaster_personality"
 
@@ -210,7 +211,7 @@ class lizardfs::master(
     if $::osfamily == 'Debian' {
       file { '/etc/default/lizardfs-master':
         ensure  => present,
-        content => "# MANAGED BY PUPPET\nLIZARDFSMASTER_ENABLE=true\nDAEMON_OPTS=\"\"\n",
+        content => "# MANAGED BY PUPPET\nLIZARDFSMASTER_ENABLE=true\nDAEMON_OPTS=\"-c '$mfsmaster_cfg'\"\n",
         before  => Service[$::lizardfs::master_service],
       }
     }

@@ -60,6 +60,8 @@ class lizardfs::chunkserver(
   }
 
   include lizardfs
+  $working_user = $::lizardfs::user
+  $working_group = $::lizardfs::group
 
   Exec {
     user => 'root',
