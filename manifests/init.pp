@@ -38,7 +38,7 @@ class lizardfs($manage_repos = true) {
     if $::osfamily == 'RedHat' {
       $user = 'mfs'
       $group = 'mfs'
-
+      $master_data_path = '/var/lib/mfs'
       $cfgdir = '/etc/mfs/'       # Always put '/' in the end
       validate_re($cfgdir, '/$')  # check if the '/' is present in $cfgdir
 
@@ -59,11 +59,37 @@ class lizardfs($manage_repos = true) {
       }
     }
     elsif $::osfamily == 'Debian' {
-      $user = 'lizardfs'
-      $group = 'lizardfs'
+      if $manage_repos {
+        # you use packages.lizardfs.org? The users are the same as RedHat
+        $user = 'mfs'
+        $group = 'mfs'
+        $master_data_path = '/var/lib/mfs'
+        $cfgdir = '/etc/mfs/'    # Always put '/' in the end
+        validate_re($cfgdir, '/$')
 
-      $cfgdir = '/etc/lizardfs/'    # Always put '/' in the end
-      validate_re($cfgdir, '/$')
+        if $::lsbdistcodename == 'jessie' or $::lsbdistcodename == 'wheezy' {
+          ::apt::key{'lizardfs':
+            id     => '4E545F8BD6FDC4BDE65F7E723EE4D2780BF8466D',
+            source => 'http://packages.lizardfs.com/lizardfs.key',
+          }
+
+          ::apt::source {'lizardfs':
+            comment  => 'The official LizardFS repository.',
+            location => "http://packages.lizardfs.com/debian/${::lsbdistcodename}",
+            release  => $::lsbdistcodename,
+            repos    => 'main',
+            # pin    => '-10',
+          }
+        }
+      }
+      else {
+        # if you use the Debian repositories, the user is lizardfs
+        $user = 'lizardfs'
+        $group = 'lizardfs'
+        $master_data_path = '/var/lib/lizardfs'
+        $cfgdir = '/etc/lizardfs/'    # Always put '/' in the end
+        validate_re($cfgdir, '/$')
+      }
     }
     else {
       fail()

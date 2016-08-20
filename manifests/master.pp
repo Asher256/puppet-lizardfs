@@ -105,9 +105,9 @@ class lizardfs::master(
 
   include lizardfs
 
-  Package {
-    require => Class['lizardfs']
-  }
+  # Package {
+  #  require => Class['lizardfs']
+  # }
 
   Exec {
     user => 'root',
@@ -146,28 +146,15 @@ class lizardfs::master(
   $mfsmaster_header = "${lizardfs::cfgdir}.mfsmaster.header.cfg"
   $mfsmaster_personality = "${lizardfs::cfgdir}.mfsmaster_personality"
 
-  #
-  # The default metadata dir and $data_path management
-  #
-  if $::osfamily == 'RedHat' {
-    $default_data_path = '/var/lib/mfs'
-  }
-  elsif $::osfamily == 'Debian' {
-    $default_data_path = '/var/lib/lizardfs'
-  }
-  else {
-    fail("Your operating system ${::operatingsystem} is not supported by the class lizardfs::master")
-  }
-
   if $data_path == undef {
-    $metadata_file = "${default_data_path}/metadata.mfs"
+    $metadata_file = "${::lizardfs::master_data_path}/metadata.mfs"
   }
   else {
     $metadata_file = "${data_path}/metadata.mfs"
   }
 
-  # metadata.mfs.empty is always stored in the default_data_path
-  $metadata_file_empty = "${default_data_path}/metadata.mfs.empty"
+  # metadata.mfs.empty is always stored in the $::lizardfs::master_data_path
+  $metadata_file_empty = "${::lizardfs::master_data_path}/metadata.mfs.empty"
 
   exec { $script_generate_mfsmaster:
     refreshonly => true,
@@ -210,11 +197,19 @@ class lizardfs::master(
   }
 
   -> exec { "cp '${metadata_file_empty}' '${metadata_file}'":
-    unless  => "test -f '${metadata_file}'",
-    user    => $::lizardfs::user,
+    unless => "test -f '${metadata_file}'",
+    user   => $::lizardfs::user,
   }
 
   if $manage_service {
+    if $::osfamily == 'Debian' {
+      file { '/etc/default/lizardfs-master':
+        ensure  => present,
+        content => "# MANAGED BY PUPPET\nLIZARDFSMASTER_ENABLE=true\nDAEMON_OPTS=\"\"\n",
+        before  => Service[$::lizardfs::master_service],
+      }
+    }
+
     Exec["cp '${metadata_file_empty}' '${metadata_file}'"]
 
     -> service { $::lizardfs::master_service:
