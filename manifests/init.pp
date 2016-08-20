@@ -20,8 +20,16 @@
 # class {'lizardfs':
 # }
 #
+# === Parameters
+#
+# [*manage_repos*]
+#   manage_repos=true to manage the LizardFS repositories automatically.
+#   Currently this parameter will manage the repositories of yum only
+#   (RedHat/CentOS). Debian and Ubuntu does not need any repository to
+#   install LizardFS since it is available in the default repositories.
+#
 
-class lizardfs() {
+class lizardfs($manage_repos = true) {
   # by default, the data_dir (Master) and Metalogger files can be read only by
   # LizardFS user + LizardFS group
   $secure_dir_permission = '0750'
@@ -34,13 +42,21 @@ class lizardfs() {
       $cfgdir = '/etc/mfs/'       # Always put '/' in the end
       validate_re($cfgdir, '/$')  # check if the '/' is present in $cfgdir
 
-      yumrepo { 'lizardfs':
-            baseurl  => "http://packages.lizardfs.com/yum/el${::operatingsystemmajrelease}/",
-            descr    => 'LizardFS Packages',
-            enabled  => 1,
-            gpgcheck => 0,
+      if $manage_repos {
+        if $::operatingsystem == 'CentOS' {
+          $yum_baseurl = "http://packages.lizardfs.com/yum/centos${::operatingsystemmajrelease}/"
+        }
+        else {
+          $yum_baseurl = "http://packages.lizardfs.com/yum/el${::operatingsystemmajrelease}/"
+        }
+
+        yumrepo { 'lizardfs':
+              baseurl  => $yum_baseurl,
+              descr    => 'LizardFS Packages',
+              enabled  => 1,
+              gpgcheck => 0,
+        }
       }
-      
     }
     elsif $::osfamily == 'Debian' {
       $user = 'lizardfs'
