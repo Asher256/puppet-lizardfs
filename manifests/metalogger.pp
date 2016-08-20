@@ -47,6 +47,8 @@ class lizardfs::metalogger(
   validate_bool($manage_service)
 
   include lizardfs
+  $working_user = $::lizardfs::user
+  $working_group = $::lizardfs::group
 
   Exec {
     user => 'root',
