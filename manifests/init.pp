@@ -30,18 +30,33 @@
 #
 
 class lizardfs($manage_repos = true) {
+  # Because the Debian package is different than the Debian package
+  # from packages.lizardfs.org, we will unify the user with Puppet
+  $master_data_path = '/var/lib/lizardfs'
+  $cfgdir = '/etc/lizardfs/'       # Always put '/' in the end
+  $user = 'lizardfs'
+  $group = 'lizardfs'
+  validate_re($cfgdir, '/$')       # check if the '/' is present in $cfgdir
+
+  group { 'lizardfs':
+    ensure  => present,
+  }
+
+  user { 'lizardfs':
+    ensure     => present,
+    gid        => 'mfs',
+    home       => $master_data_path,
+    managehome => true,
+    comment    => 'LizardFS user',
+    require    => Group['lizardfs'],
+  }
+
   # by default, the data_dir (Master) and Metalogger files can be read only by
   # LizardFS user + LizardFS group
   $secure_dir_permission = '0750'
 
   if $::osfamily == 'RedHat' or $::osfamily == 'Debian' {
     if $::osfamily == 'RedHat' {
-      $user = 'mfs'
-      $group = 'mfs'
-      $master_data_path = '/var/lib/mfs'
-      $cfgdir = '/etc/mfs/'       # Always put '/' in the end
-      validate_re($cfgdir, '/$')  # check if the '/' is present in $cfgdir
-
       if $manage_repos {
         if $::operatingsystem == 'CentOS' {
           $yum_baseurl = "http://packages.lizardfs.com/yum/centos${::operatingsystemmajrelease}/"
@@ -60,13 +75,6 @@ class lizardfs($manage_repos = true) {
     }
     elsif $::osfamily == 'Debian' {
       if $manage_repos {
-        # you use packages.lizardfs.org? The users are the same as RedHat
-        $user = 'mfs'
-        $group = 'mfs'
-        $master_data_path = '/var/lib/mfs'
-        $cfgdir = '/etc/mfs/'    # Always put '/' in the end
-        validate_re($cfgdir, '/$')
-
         if $::lsbdistcodename == 'jessie' or $::lsbdistcodename == 'wheezy' {
           ::apt::key{'lizardfs':
             id     => '4E545F8BD6FDC4BDE65F7E723EE4D2780BF8466D',
@@ -79,16 +87,9 @@ class lizardfs($manage_repos = true) {
             release  => $::lsbdistcodename,
             repos    => 'main',
             # pin    => '-10',
+            notify   => Exec['apt_update'],
           }
         }
-      }
-      else {
-        # if you use the Debian repositories, the user is lizardfs
-        $user = 'lizardfs'
-        $group = 'lizardfs'
-        $master_data_path = '/var/lib/lizardfs'
-        $cfgdir = '/etc/lizardfs/'    # Always put '/' in the end
-        validate_re($cfgdir, '/$')
       }
     }
     else {

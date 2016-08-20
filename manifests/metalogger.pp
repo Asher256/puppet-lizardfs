@@ -76,7 +76,7 @@ class lizardfs::metalogger(
 
   if $manage_service {
     if $::osfamily == 'Debian' {
-      file { '/etc/default/lizardfs-chunkserver':
+      file { '/etc/default/lizardfs-metalogger':
         ensure  => present,
         content => "# MANAGED BY PUPPET\nLIZARDFSMETALOGGER_ENABLE=true\nDAEMON_OPTS=\"\"\n",
         before => Service[$::lizardfs::metalogger_service],
