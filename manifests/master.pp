@@ -90,9 +90,6 @@ class lizardfs::master(
   validate_array($globaliolimits)
   validate_bool($manage_service)
 
-  $working_user = $::lizardfs::user
-  $working_group = $::lizardfs::group
-
   if $data_path != undef {
     validate_absolute_path($data_path)
   }
@@ -107,10 +104,8 @@ class lizardfs::master(
   }
 
   include lizardfs
-
-  # Package {
-  #  require => Class['lizardfs']
-  # }
+  $working_user = $::lizardfs::user
+  $working_group = $::lizardfs::group
 
   Exec {
     user => 'root',
