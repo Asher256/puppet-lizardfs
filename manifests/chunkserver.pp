@@ -100,6 +100,14 @@ class lizardfs::chunkserver(
   }
 
   if $manage_service {
+    if $::osfamily == 'Debian' {
+      file { '/etc/default/lizardfs-chunkserver':
+        ensure  => present,
+        content => "# MANAGED BY PUPPET\nLIZARDFSCHUNKSERVER_ENABLE=true\nDAEMON_OPTS=\"\"\n",
+        before => Service[$::lizardfs::chunkserver_service],
+      }
+    }
+
     File[$hdd]
     -> File["${lizardfs::cfgdir}mfschunkserver.cfg"]
     -> File["${lizardfs::cfgdir}mfshdd.cfg"]
