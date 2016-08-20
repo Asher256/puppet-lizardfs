@@ -90,6 +90,9 @@ class lizardfs::master(
   validate_array($globaliolimits)
   validate_bool($manage_service)
 
+  $working_user = $::lizardfs::user
+  $working_group = $::lizardfs::group
+
   if $data_path != undef {
     validate_absolute_path($data_path)
   }
@@ -147,14 +150,20 @@ class lizardfs::master(
   $mfsmaster_personality = "${lizardfs::cfgdir}.mfsmaster_personality"
 
   if $data_path == undef {
+    $metadata_dir = "${::lizardfs::master_data_path}"
     $metadata_file = "${::lizardfs::master_data_path}/metadata.mfs"
   }
   else {
+    $metadata_dir = "${data_path}"
     $metadata_file = "${data_path}/metadata.mfs"
   }
 
-  # metadata.mfs.empty is always stored in the $::lizardfs::master_data_path
-  $metadata_file_empty = "${::lizardfs::master_data_path}/metadata.mfs.empty"
+  file { $metadata_dir:
+    ensure  => directory,
+    owner   => $::lizardfs::user,
+    group   => $::lizardfs::group,
+    mode    => $::lizardfs::secure_dir_permission,
+  }
 
   exec { $script_generate_mfsmaster:
     refreshonly => true,
@@ -196,9 +205,10 @@ class lizardfs::master(
     notify  => Exec['mfsmaster reload']
   }
 
-  -> exec { "cp '${metadata_file_empty}' '${metadata_file}'":
-    unless => "test -f '${metadata_file}'",
-    user   => $::lizardfs::user,
+  -> exec { "echo 'MFSM NEW' > '${metadata_file}'":
+    unless  => "test -f '${metadata_file}'",
+    user    => $::lizardfs::user,
+    require => File[$metadata_dir],
   }
 
   if $manage_service {
@@ -210,7 +220,7 @@ class lizardfs::master(
       }
     }
 
-    Exec["cp '${metadata_file_empty}' '${metadata_file}'"]
+    Exec["echo 'MFSM NEW' > '${metadata_file}'"]
 
     -> service { $::lizardfs::master_service:
       ensure => running,
@@ -222,7 +232,7 @@ class lizardfs::master(
     }
   }
   else {
-    Exec["cp '${metadata_file_empty}' '${metadata_file}'"]
+    Exec["echo 'MFSM NEW' > '${metadata_file}'"]
 
     # will do nothing if we choose to not manage the service
     -> exec { 'mfsmaster reload':
