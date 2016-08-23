@@ -63,11 +63,6 @@
 # [*manage_service*] True to tell Puppet to start or stop the lizardfs-master
 # service automatically.
 #
-# [*data_path*] (optional) the directory where the LizardFS Master's data is
-# stored. It is the equivalent of DATA_PATH on mfsmaster.cfg.
-# More informations about DATA_PATH can be found in this page:
-# https://github.com/lizardfs/lizardfs/blob/master/doc/mfsmaster.cfg.5.txt
-#
 
 class lizardfs::master(
   $ensure = 'present',
@@ -78,7 +73,6 @@ class lizardfs::master(
   $topology = [],
   $globaliolimits = [],
   $manage_service = true,
-  $data_path = undef,
 )
 {
   validate_string($ensure)
@@ -90,17 +84,13 @@ class lizardfs::master(
   validate_array($globaliolimits)
   validate_bool($manage_service)
 
-  if $data_path != undef {
-    validate_absolute_path($data_path)
-  }
-
   $options_keys = upcase(keys($options))
   if 'PERSONALITY' in $options_keys {
     fail('It is forbidden to modify the personality of the LizardFS Master with "lizardfs::master::options[\'PERSONALITY\']". Use \'lizardfs::master::first_personality\' to set the first personality.')
   }
 
   if 'DATA_PATH' in $options_keys {
-    fail('To modify DATA_PATH use the argument "lizardfs::master::data_path" instead of "lizardfs::master::options[\'data_path\']".')
+    fail('To modify DATA_PATH use the argument "lizardfs::data_path" instead of "lizardfs::master::options[\'DATA_PATH\']".')
   }
 
   include lizardfs
@@ -145,21 +135,8 @@ class lizardfs::master(
   $mfsmaster_header = "${lizardfs::cfgdir}.mfsmaster.header.cfg"
   $mfsmaster_personality = "${lizardfs::cfgdir}.mfsmaster_personality"
 
-  if $data_path == undef {
-    $metadata_dir = "${::lizardfs::master_data_path}"
-    $metadata_file = "${::lizardfs::master_data_path}/metadata.mfs"
-  }
-  else {
-    $metadata_dir = "${data_path}"
-    $metadata_file = "${data_path}/metadata.mfs"
-  }
-
-  file { $metadata_dir:
-    ensure  => directory,
-    owner   => $::lizardfs::user,
-    group   => $::lizardfs::group,
-    mode    => $::lizardfs::secure_dir_permission,
-  }
+  $metadata_dir = $::lizardfs::metadata_dir
+  $metadata_file = "${metadata_dir}/metadata.mfs"
 
   exec { $script_generate_mfsmaster:
     refreshonly => true,
@@ -181,9 +158,24 @@ class lizardfs::master(
     content => template('lizardfs/etc/lizardfs/generate-mfsmaster.cfg.sh.erb'),
   }
 
+  # we create this legacy link because the vendor packages
+  # (hosted on packages.lizardfs.org) continue to use the legacy
+  # directory /etc/mfs/
+  -> file { "${::lizardfs::legacy_cfgdir}mfsmaster.cfg":
+    ensure  => 'link',
+    target  => "${::lizardfs::cfgdir}mfsmaster.cfg",
+    require => File[$::lizardfs::legacy_cfgdir],
+  }
+
   -> file { "${lizardfs::cfgdir}mfsexports.cfg":
     content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
     notify  => Exec['mfsmaster reload']
+  }
+
+  -> file { "${::lizardfs::legacy_cfgdir}mfsexports.cfg":
+    ensure  => 'link',
+    target  => "${::lizardfs::cfgdir}mfsexports.cfg",
+    require => File[$::lizardfs::legacy_cfgdir],
   }
 
   -> file { "${lizardfs::cfgdir}mfsgoals.cfg":
@@ -191,9 +183,21 @@ class lizardfs::master(
     notify  => Exec['mfsmaster reload']
   }
 
+  -> file { "${::lizardfs::legacy_cfgdir}mfsgoals.cfg":
+    ensure  => 'link',
+    target  => "${::lizardfs::cfgdir}mfsgoals.cfg",
+    require => File[$::lizardfs::legacy_cfgdir],
+  }
+
   -> file { "${lizardfs::cfgdir}mfstopology.cfg":
     content => template('lizardfs/etc/lizardfs/mfstopology.cfg.erb'),
     notify  => Exec['mfsmaster reload']
+  }
+
+  -> file { "${::lizardfs::legacy_cfgdir}mfstopology.cfg":
+    ensure  => 'link',
+    target  => "${::lizardfs::cfgdir}mfstopology.cfg",
+    require => File[$::lizardfs::legacy_cfgdir],
   }
 
   -> file { "${lizardfs::cfgdir}globaliolimits.cfg":
@@ -201,10 +205,16 @@ class lizardfs::master(
     notify  => Exec['mfsmaster reload']
   }
 
+  -> file { "${::lizardfs::legacy_cfgdir}globaliolimits.cfg":
+    ensure  => 'link',
+    target  => "${::lizardfs::cfgdir}globaliolimits.cfg",
+    require => File[$::lizardfs::legacy_cfgdir],
+  }
+
   -> exec { "echo 'MFSM NEW' > '${metadata_file}'":
     unless  => "test -f '${metadata_file}'",
     user    => $::lizardfs::user,
-    require => File[$metadata_dir],
+    require => File[$lizardfs::metadata_dir],
   }
 
   if $manage_service {
