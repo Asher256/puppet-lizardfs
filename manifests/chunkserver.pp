@@ -47,7 +47,8 @@ class lizardfs::chunkserver(
   $hdd = [],
   $hdd_disabled = [],
   $options = {},
-  $manage_service = true)
+  $manage_service = true,
+)
 {
   validate_string($ensure)
   validate_hash($options)
@@ -59,7 +60,13 @@ class lizardfs::chunkserver(
     fail('You need to add at least one directory to the array \'lizardfs::chunkserver::hdd\' OR \'lizardfs::chunkserver::hdd_disabled\'.')
   }
 
+  $options_keys = upcase(keys($options))
+  if 'DATA_PATH' in $options_keys {
+    fail('To modify DATA_PATH use the argument "lizardfs::data_path" instead of "lizardfs::chunkservers::options[\'DATA_PATH\']".')
+  }
+
   include lizardfs
+  $metadata_dir = $::lizardfs::metadata_dir
   $working_user = $::lizardfs::user
   $working_group = $::lizardfs::group
 
@@ -77,8 +84,7 @@ class lizardfs::chunkserver(
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    require => [Class['lizardfs'],
-                Package[$::lizardfs::chunkserver_package]],
+    require => Class['lizardfs'],
     notify  => Exec['mfschunkserver reload']
   }
 
@@ -86,49 +92,55 @@ class lizardfs::chunkserver(
     ensure => $ensure,
   }
 
-  file { $hdd:
+  -> file { $hdd:
     ensure => directory,
     mode   => $::lizardfs::secure_dir_permission,
     owner  => $::lizardfs::user,
     group  => $::lizardfs::group,
   }
 
-  file { "${lizardfs::cfgdir}mfschunkserver.cfg":
+  -> file { "${lizardfs::cfgdir}mfschunkserver.cfg":
     content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
   }
 
-  file { "${lizardfs::cfgdir}mfshdd.cfg":
+  -> file { "${::lizardfs::legacy_cfgdir}mfschunkserver.cfg":
+    ensure  => 'link',
+    target  => "${::lizardfs::cfgdir}mfschunkserver.cfg",
+    require => File[$::lizardfs::legacy_cfgdir],
+  }
+
+  -> file { "${lizardfs::cfgdir}mfshdd.cfg":
     content => template('lizardfs/etc/lizardfs/mfshdd.cfg.erb'),
   }
+
+  -> file { "${::lizardfs::legacy_cfgdir}mfshdd.cfg":
+    ensure  => 'link',
+    target  => "${::lizardfs::cfgdir}mfshdd.cfg",
+    require => File[$::lizardfs::legacy_cfgdir],
+  }
+
 
   if $manage_service {
     if $::osfamily == 'Debian' {
       file { '/etc/default/lizardfs-chunkserver':
         ensure  => present,
         content => "# MANAGED BY PUPPET\nLIZARDFSCHUNKSERVER_ENABLE=true\nDAEMON_OPTS=\"\"\n",
-        before => Service[$::lizardfs::chunkserver_service],
+        before  => Service[$::lizardfs::chunkserver_service],
       }
     }
 
-    File[$hdd]
-    -> File["${lizardfs::cfgdir}mfschunkserver.cfg"]
-    -> File["${lizardfs::cfgdir}mfshdd.cfg"]
-
+    File["${::lizardfs::legacy_cfgdir}mfshdd.cfg"]
     -> service { $::lizardfs::chunkserver_service:
       ensure => running,
       enable => true,
     }
-
     -> exec { 'mfschunkserver reload':
       command     => 'mfschunkserver reload',
       refreshonly => true,
     }
   }
   else {
-    File[$hdd]
-    -> File["${lizardfs::cfgdir}mfschunkserver.cfg"]
-    -> File["${lizardfs::cfgdir}mfshdd.cfg"]
-
+    File["${::lizardfs::legacy_cfgdir}mfshdd.cfg"]
     -> exec { 'mfschunkserver reload':
       command     => 'true',    # lint:ignore:quoted_booleans
       refreshonly => true,

@@ -46,7 +46,13 @@ class lizardfs::metalogger(
   validate_hash($options)
   validate_bool($manage_service)
 
+  $options_keys = upcase(keys($options))
+  if 'DATA_PATH' in $options_keys {
+    fail('To modify DATA_PATH use the argument "lizardfs::data_path" instead of "lizardfs::metalogger::options[\'DATA_PATH\']".')
+  }
+
   include lizardfs
+  $metadata_dir = $::lizardfs::metadata_dir
   $working_user = $::lizardfs::user
   $working_group = $::lizardfs::group
 
@@ -76,6 +82,12 @@ class lizardfs::metalogger(
     notify  => Exec['mfsmetalogger reload']
   }
 
+  -> file { "${::lizardfs::legacy_cfgdir}mfsmetalogger.cfg":
+    ensure  => 'link',
+    target  => "${::lizardfs::cfgdir}mfsmetalogger.cfg",
+    require => File[$::lizardfs::legacy_cfgdir],
+  }
+
   if $manage_service {
     if $::osfamily == 'Debian' {
       file { '/etc/default/lizardfs-metalogger':
@@ -88,7 +100,7 @@ class lizardfs::metalogger(
     service { $::lizardfs::metalogger_service:
       ensure  => running,
       enable  => true,
-      require => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
+      require => File["${::lizardfs::legacy_cfgdir}mfsmetalogger.cfg"],
     }
 
     -> exec { 'mfsmetalogger reload':
@@ -100,7 +112,7 @@ class lizardfs::metalogger(
     exec { 'mfsmetalogger reload':
       command     => 'true',
       refreshonly => true,
-      require     => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
+      require => File["${::lizardfs::legacy_cfgdir}mfsmetalogger.cfg"],
     }
   }
 }
