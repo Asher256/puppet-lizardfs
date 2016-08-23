@@ -23,18 +23,24 @@
 #
 # === Parameters
 #
-# [*ensure*] This parameter is passed to the LizardFS CGI package.
-#            You can specify: present, absent or the package version.
+# [*ensure*]
+#   This parameter is passed to the LizardFS CGI package.
+#   You can specify: present, absent or the package version.
 #
-# [*bind_host*] local address to listen on
+# [*bind_host*]
+#   local address to listen on
 #
-# [*bind_port*] port to listen on
+# [*bind_port*]
+#   port to listen on
 #
-# [*user*] user to run the daemon as
+# [*user*]
+#   user to run the daemon as
 #
-# [*group*] group to run the daemon as
+# [*group*]
+#   group to run the daemon as
 #
-# [*manage_service*] ask Puppet to start LizardFS CGI Server automatically
+# [*manage_service*]
+#   ask Puppet to start LizardFS CGI Server automatically
 #
 
 class lizardfs::cgi(
@@ -53,39 +59,30 @@ class lizardfs::cgi(
   validate_string($group)
   validate_bool($manage_service)
 
-  include lizardfs
+  include ::lizardfs
 
   File {
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    require => Class['lizardfs']
   }
 
-  Exec {
-    require => Class['lizardfs']
-  }
+  Class['::lizardfs']
 
-  Package {
-    require => Class['lizardfs']
-  }
-
-  package { [$::lizardfs::cgi_package, $::lizardfs::cgiserv_package]:
+  -> package { [$::lizardfs::cgi_package, $::lizardfs::cgiserv_package]:
     ensure  => $ensure,
   }
 
-  ->
-  file { '/etc/default/lizardfs-cgiserv' :
+  -> file { '/etc/default/lizardfs-cgiserv' :
     content => template('lizardfs/etc/default/lizardfs-cgiserv'),
     notify  => Service[$::lizardfs::cgiserv_service],
   }
 
   if $manage_service {
     service { $::lizardfs::cgiserv_service:
-      ensure    => running,
-      enable    => true,
-      subscribe => File['/etc/default/lizardfs-cgiserv'],
-      require   => File['/etc/default/lizardfs-cgiserv'],
+      ensure  => running,
+      enable  => true,
+      require => File['/etc/default/lizardfs-cgiserv'],
     }
   }
 }

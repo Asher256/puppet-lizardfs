@@ -23,23 +23,34 @@
 #
 # === Parameters
 #
-# [*ensure*] This parameter is passed to the LizardFS Chunkserver package.
-# You can specify: present, absent or the package version.
+# [*ensure*]
+#   This parameter is passed to the LizardFS Chunkserver package.
+#   You can specify: present, absent or the package version.
 #
-# [*options*] Keys/values of the configuration file mfschunkserver.cfg
-# https://github.com/lizardfs/lizardfs/blob/master/doc/mfschunkserver.cfg.5.txt
+# [*options*]
+#   Keys/values of the configuration file mfschunkserver.cfg
+#   https://github.com/lizardfs/lizardfs/blob/master/doc/mfschunkserver.cfg.5.txt
 #
-# [*hdd*] a list of mount points that will:
-#   1. Created automatically by Puppet (with file {})
-#   2. Added to /etc/lizardfs/mfshdd.cfg
+# [*hdd*]
+#   A list of mount points that will:
+#     1. Created automatically by Puppet (with file {})
+#     2. Added to /etc/lizardfs/mfshdd.cfg
 #
-# [*hdd_disabled*] a list of mount points that will be 'marked for removal'.
-# Each mount point will be added to /etc/lizardfs/mfshdd.cfg with an asterisk *
-# before the point point (example: */mount/point).
-# Read this page for more information about this:
-# https://github.com/lizardfs/lizardfs/blob/master/doc/mfshdd.cfg.5.txt
+# [*hdd_disabled*]
+#   A list of mount points that will be 'marked for removal'.
+#   Each mount point will be added to /etc/lizardfs/mfshdd.cfg with an asterisk *
+#   before the point point (example: */mount/point).
+#   Read this page for more information about this:
+#   https://github.com/lizardfs/lizardfs/blob/master/doc/mfshdd.cfg.5.txt
 #
-# [*manage_service*] start or stop the lizardfs-chunkserver service
+# [*manage_service*]
+#   start or stop the lizardfs-chunkserver service.
+#
+# [*data_path*]
+#   The directory where the LizardFS Chunkserver's data is stored. It is the equivalent
+#   of DATA_PATH on 'mfschunkserver.cfg'. By default, it is equal to /var/lib/lizardfs/
+#   More informations about DATA_PATH can be found in this page:
+#   https://github.com/lizardfs/lizardfs/blob/master/doc/mfschunkserver.cfg.5.txt
 #
 
 class lizardfs::chunkserver(
@@ -48,12 +59,13 @@ class lizardfs::chunkserver(
   $hdd_disabled = [],
   $options = {},
   $manage_service = true,
+  $data_path = '/var/lib/lizardfs',
 )
 {
   validate_string($ensure)
-  validate_hash($options)
   validate_array($hdd)
   validate_array($hdd_disabled)
+  validate_hash($options)
   validate_bool($manage_service)
 
   if empty($hdd) and empty($hdd_disabled) {
@@ -65,30 +77,46 @@ class lizardfs::chunkserver(
     fail('To modify DATA_PATH use the argument "lizardfs::data_path" instead of "lizardfs::chunkservers::options[\'DATA_PATH\']".')
   }
 
-  include lizardfs
-  $metadata_dir = $::lizardfs::metadata_dir
+  # Because the Debian package is different than the Debian package
+  # from packages.lizardfs.org, we will unify the user with Puppet
+  $metadata_dir = $data_path
+  validate_re($metadata_dir, '[^/]$')  # / is forbidden in the end of $data_path
+  validate_absolute_path($metadata_dir)
+
+  include ::lizardfs
   $working_user = $::lizardfs::user
   $working_group = $::lizardfs::group
 
   Exec {
     user => 'root',
-    path => '/bin:/sbin:/usr/bin:/usr/sbin',
-    require => Class['lizardfs']
-  }
-
-  Package {
-    require => Class['lizardfs']
+    path => $::lizardfs::path,
   }
 
   File {
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    require => Class['lizardfs'],
-    notify  => Exec['mfschunkserver reload']
   }
 
-  package { $::lizardfs::chunkserver_package:
+  if $::lizardfs::create_legacy {
+    file { "${::lizardfs::legacy_cfgdir}mfschunkserver.cfg":
+      ensure  => 'link',
+      target  => "${::lizardfs::cfgdir}mfschunkserver.cfg",
+      before  => File["${lizardfs::cfgdir}mfschunkserver.cfg"],
+      require => Class['::lizardfs'],
+    }
+
+    file { "${::lizardfs::legacy_cfgdir}mfshdd.cfg":
+      ensure  => 'link',
+      target  => "${::lizardfs::cfgdir}mfshdd.cfg",
+      before  => File["${lizardfs::cfgdir}mfshdd.cfg"],
+      require => Class['::lizardfs'],
+    }
+  }
+
+  Class['::lizardfs']
+
+  -> package { $::lizardfs::chunkserver_package:
     ensure => $ensure,
   }
 
@@ -103,22 +131,9 @@ class lizardfs::chunkserver(
     content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
   }
 
-  -> file { "${::lizardfs::legacy_cfgdir}mfschunkserver.cfg":
-    ensure  => 'link',
-    target  => "${::lizardfs::cfgdir}mfschunkserver.cfg",
-    require => File[$::lizardfs::legacy_cfgdir],
-  }
-
   -> file { "${lizardfs::cfgdir}mfshdd.cfg":
     content => template('lizardfs/etc/lizardfs/mfshdd.cfg.erb'),
   }
-
-  -> file { "${::lizardfs::legacy_cfgdir}mfshdd.cfg":
-    ensure  => 'link',
-    target  => "${::lizardfs::cfgdir}mfshdd.cfg",
-    require => File[$::lizardfs::legacy_cfgdir],
-  }
-
 
   if $manage_service {
     if $::osfamily == 'Debian' {
@@ -129,21 +144,22 @@ class lizardfs::chunkserver(
       }
     }
 
-    File["${::lizardfs::legacy_cfgdir}mfshdd.cfg"]
-    -> service { $::lizardfs::chunkserver_service:
-      ensure => running,
-      enable => true,
+    service { $::lizardfs::chunkserver_service:
+      ensure  => running,
+      enable  => true,
+      require => File["${::lizardfs::legacy_cfgdir}mfshdd.cfg"],
     }
+
     -> exec { 'mfschunkserver reload':
       command     => 'mfschunkserver reload',
       refreshonly => true,
     }
   }
   else {
-    File["${::lizardfs::legacy_cfgdir}mfshdd.cfg"]
-    -> exec { 'mfschunkserver reload':
+    exec { 'mfschunkserver reload':
       command     => 'true',    # lint:ignore:quoted_booleans
       refreshonly => true,
+      require     => File["${::lizardfs::legacy_cfgdir}mfshdd.cfg"],
     }
   }
 }
