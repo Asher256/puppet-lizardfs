@@ -93,7 +93,7 @@ class lizardfs::metalogger(
       file { '/etc/default/lizardfs-metalogger':
         ensure  => present,
         content => "# MANAGED BY PUPPET\nLIZARDFSMETALOGGER_ENABLE=true\nDAEMON_OPTS=\"\"\n",
-        before => Service[$::lizardfs::metalogger_service],
+        before  => Service[$::lizardfs::metalogger_service],
       }
     }
 
@@ -110,9 +110,9 @@ class lizardfs::metalogger(
   }
   else {
     exec { 'mfsmetalogger reload':
-      command     => 'true',
+      command     => 'true', # lint:ignore:quoted_booleans
       refreshonly => true,
-      require => File["${::lizardfs::legacy_cfgdir}mfsmetalogger.cfg"],
+      require     => File["${::lizardfs::legacy_cfgdir}mfsmetalogger.cfg"],
     }
   }
 }

@@ -65,10 +65,10 @@ class lizardfs(
   }
 
   file { $metadata_dir:
-    ensure  => directory,
-    owner   => $::lizardfs::user,
-    group   => $::lizardfs::group,
-    mode    => $::lizardfs::secure_dir_permission,
+    ensure => directory,
+    owner  => $::lizardfs::user,
+    group  => $::lizardfs::group,
+    mode   => $::lizardfs::secure_dir_permission,
   }
 
   $legacy_cfgdir = '/etc/mfs/'        # backware compability with the vendor packages
@@ -87,7 +87,7 @@ class lizardfs(
     user { 'lizardfs':
       ensure     => present,
       gid        => 'lizardfs',
-      home       => $master_data_path,
+      home       => $metadata_dir,
       managehome => true,
       comment    => 'LizardFS user',
       require    => Group['lizardfs'],
