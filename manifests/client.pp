@@ -23,24 +23,20 @@
 #
 # === Parameters
 #
-# [*ensure*] This parameter is passed to the LizardFS's client package.
-#            You can specify: present, absent or the package version.
+# [*ensure*]
+#   This parameter is passed to the LizardFS's client package.
+#   You can specify: present, absent or the package version.
 #
 
 class lizardfs::client($ensure = 'present')
 {
   validate_string($ensure)
 
-  include lizardfs
+  include ::lizardfs
 
-  package { $::lizardfs::client_package:
+  package { [$::lizardfs::client_package, $::lizardfs::fuse_package]:
     ensure  => $ensure,
-    require => Class['lizardfs']
-  }
-
-  # fuse is needed to mount the partitions
-  package { $::lizardfs::fuse_package:
-    ensure  => present,
+    require => Class['::lizardfs'],
   }
 }
 
