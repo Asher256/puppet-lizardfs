@@ -129,10 +129,12 @@ class lizardfs::chunkserver(
 
   -> file { "${lizardfs::cfgdir}mfschunkserver.cfg":
     content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
+    notify  => Exec['mfschunkserver reload'],
   }
 
   -> file { "${lizardfs::cfgdir}mfshdd.cfg":
     content => template('lizardfs/etc/lizardfs/mfshdd.cfg.erb'),
+    notify  => Exec['mfschunkserver reload'],
   }
 
   if $manage_service {
