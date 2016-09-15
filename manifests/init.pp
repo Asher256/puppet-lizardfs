@@ -30,6 +30,10 @@
 #   true to create the user + group 'lizardfs' automatically.
 #   If you specify false, you will have to create the user and group yourself.
 #
+# [*max_open_files*]
+#   Will modify the value of the maximum number of open files in
+#   /etc/security/limits.d/10-lizardfs.conf for the LizardFS user.
+#
 
 class lizardfs(
   $manage_repos = true,
@@ -38,11 +42,13 @@ class lizardfs(
   $group = 'lizardfs',
   $user_uid = undef,
   $group_gid = undef,
+  $max_open_files = 32768,
 ) {
   validate_bool($manage_repos)
   validate_bool($manage_user)
   validate_string($user)
   validate_string($group)
+  validate_integer($max_open_files)
 
   if $user_uid != undef {
     validate_integer($user_uid)
@@ -91,6 +97,9 @@ class lizardfs(
   }
 
   if $::osfamily == 'RedHat' or $::osfamily == 'Debian' {
+    $common_package = 'lizardfs-common'
+    $limits_file = '/etc/security/limits.d/10-lizardfs.conf'
+
     # Chunkserver
     $chunkserver_package = 'lizardfs-chunkserver'
     $chunkserver_service = 'lizardfs-chunkserver'
@@ -119,6 +128,16 @@ class lizardfs(
 
   # Dependencies
   class {'::lizardfs::init::repos': }
+  -> package { $common_package: }
+  ->  file { $limits_file:
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    content => "# MANAGED BY PUPPET
+${user} soft nofile ${max_open_files}
+${user} hard nofile ${max_open_files}
+",
+  }
   -> class {'::lizardfs::init::dirs': }
   -> ::Lizardfs::Mount <||>
 }
