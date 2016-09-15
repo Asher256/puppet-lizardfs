@@ -234,7 +234,7 @@ class lizardfs::master(
     if $::osfamily == 'Debian' {
       file { '/etc/default/lizardfs-master':
         ensure  => present,
-        content => "# MANAGED BY PUPPET\nLIZARDFSMASTER_ENABLE=true\nDAEMON_OPTS=\"-c '${mfsmaster_cfg}'\"\n",
+        content => "# MANAGED BY PUPPET\nLIZARDFSMASTER_ENABLE=true\nDAEMON_OPTS=\"\"\n",
         before  => Service[$::lizardfs::master_service],
       }
     }
