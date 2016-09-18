@@ -184,11 +184,15 @@ class lizardfs::master(
     }
   }
 
-  Class['::lizardfs']
-
-  -> package { [$::lizardfs::master_package, $::lizardfs::adm_package]:
-    ensure => $ensure,
+  if $::lizardfs::manage_packages {
+    package { [$::lizardfs::master_package, $::lizardfs::adm_package]:
+      ensure => $ensure,
+      after  => Class['::lizardfs'],
+      before => Exec["echo '${first_personality}' > '${mfsmaster_personality}'"],
+    }
   }
+
+  Class['::lizardfs']
 
   -> exec { "echo '${first_personality}' > '${mfsmaster_personality}'":
     unless => "test -f '${mfsmaster_personality}'",
