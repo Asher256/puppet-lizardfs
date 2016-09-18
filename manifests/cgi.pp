@@ -67,13 +67,17 @@ class lizardfs::cgi(
     mode    => '0644',
   }
 
-  Class['::lizardfs']
-
-  -> package { [$::lizardfs::cgi_package, $::lizardfs::cgiserv_package]:
-    ensure  => $ensure,
+  if $::lizardfs::manage_packages {
+    package { [$::lizardfs::cgi_package, $::lizardfs::cgiserv_package]:
+      ensure => $ensure,
+      after  => Class['::lizardfs'],
+      before => File['/etc/default/lizardfs-cgiserv'],
+    }
   }
 
-  -> file { '/etc/default/lizardfs-cgiserv' :
+  Class['::lizardfs']
+
+  -> file { '/etc/default/lizardfs-cgiserv':
     content => template('lizardfs/etc/default/lizardfs-cgiserv'),
     notify  => Service[$::lizardfs::cgiserv_service],
   }

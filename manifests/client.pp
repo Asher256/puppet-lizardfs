@@ -34,9 +34,11 @@ class lizardfs::client($ensure = 'present')
 
   include ::lizardfs
 
-  package { [$::lizardfs::client_package, $::lizardfs::fuse_package]:
-    ensure  => $ensure,
-    require => Class['::lizardfs'],
+  if $::lizardfs::manage_packages {
+    package { [$::lizardfs::client_package, $::lizardfs::fuse_package]:
+      ensure  => $ensure,
+      require => Class['::lizardfs'],
+    }
   }
 }
 

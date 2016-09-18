@@ -92,11 +92,15 @@ class lizardfs::metalogger(
     }
   }
 
-  Class['::lizardfs']
-
-  -> package { $::lizardfs::metalogger_package:
-    ensure  => $ensure,
+  if $::lizardfs::manage_packages {
+    package { $::lizardfs::metalogger_package:
+      ensure => $ensure,
+      after  => Class['::lizardfs'],
+      before => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
+    }
   }
+
+  Class['::lizardfs']
 
   -> file { "${lizardfs::cfgdir}/mfsmetalogger.cfg":
     content => template('lizardfs/etc/lizardfs/mfsmetalogger.cfg.erb'),

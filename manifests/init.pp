@@ -26,6 +26,10 @@
 #   manage_repos=true to add the LizardFS vendor repositories automatically.
 #   Currently this parameter will manage the repositories of yum and Debian only.
 #
+# [*mange_packages*]
+#   false is you want to install LizardFS packages yourself.
+#   true to let puppet-lizardfs install the packages.
+#
 # [*manage_user*]
 #   true to create the user + group 'lizardfs' automatically.
 #   If you specify false, you will have to create the user and group yourself.
@@ -37,6 +41,7 @@
 
 class lizardfs(
   $manage_repos = true,
+  $manage_packages = true,
   $manage_user = true,
   $user = 'lizardfs',
   $group = 'lizardfs',
@@ -45,6 +50,7 @@ class lizardfs(
   $max_open_files = 32768,
 ) {
   validate_bool($manage_repos)
+  validate_bool($manage_packages)
   validate_bool($manage_user)
   validate_string($user)
   validate_string($group)
@@ -100,36 +106,47 @@ class lizardfs(
     $common_package = 'lizardfs-common'
     $limits_file = '/etc/security/limits.d/10-lizardfs.conf'
 
-    # Chunkserver
     $chunkserver_package = 'lizardfs-chunkserver'
-    $chunkserver_service = 'lizardfs-chunkserver'
-
-    # CGI
     $cgiserv_package = 'lizardfs-cgiserv'
-    $cgiserv_service= 'lizardfs-cgiserv'
     $cgi_package = 'lizardfs-cgi'
-
-    # Client
     $client_package = 'lizardfs-client'
     $fuse_package = 'fuse'
-
-    # Master
-    $master_service = 'lizardfs-master'
     $master_package = 'lizardfs-master'
     $adm_package = 'lizardfs-adm'
-
-    # Metalogger
-    $metalogger_service = 'lizardfs-metalogger'
     $metalogger_package = 'lizardfs-metalogger'
+
+    $master_service = 'lizardfs-master'
+    $chunkserver_service = 'lizardfs-chunkserver'
+    $cgiserv_service= 'lizardfs-cgiserv'
+    $metalogger_service = 'lizardfs-metalogger'
   }
   else {
-    fail("The operating system '${::operatingsystem}' is not supported by the module 'lizardfs'.")
+    if $manage_packages == true {
+      # only of the package are managed
+      fail("The operating system '${::operatingsystem}' is not supported by the module 'lizardfs'.")
+    }
+    else {
+      $limits_file = '/etc/security/limits.d/10-lizardfs.conf'
+
+      $master_service = 'lizardfs-master'
+      $chunkserver_service = 'lizardfs-chunkserver'
+      $cgiserv_service= 'lizardfs-cgiserv'
+      $metalogger_service = 'lizardfs-metalogger'
+    }
   }
 
   # Dependencies
-  class {'::lizardfs::init::repos': }
-  -> package { $common_package: }
-  ->  file { $limits_file:
+  if $manage_packages {
+    class {'::lizardfs::init::repos': }
+
+    package { $common_package:
+      ensure => present,
+      after  => Class['::lizardfs::init::repos'],
+      before => File[$limits_file],
+    }
+  }
+
+  file { $limits_file:
     owner   => 'root',
     group   => 'root',
     mode    => '0644',

@@ -114,10 +114,19 @@ class lizardfs::chunkserver(
     }
   }
 
+  if $::lizardfs::manage_packages {
+    package { $::lizardfs::chunkserver_package:
+      ensure => $ensure,
+      after  => Class['::lizardfs'],
+      before => File["${lizardfs::cfgdir}mfschunkserver.cfg"],
+    }
+  }
+
   Class['::lizardfs']
 
-  -> package { $::lizardfs::chunkserver_package:
-    ensure => $ensure,
+  -> file { "${lizardfs::cfgdir}mfschunkserver.cfg":
+    content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
+    notify  => Exec['mfschunkserver reload'],
   }
 
   -> file { $hdd:
@@ -125,11 +134,6 @@ class lizardfs::chunkserver(
     mode   => $::lizardfs::secure_dir_permission,
     owner  => $::lizardfs::user,
     group  => $::lizardfs::group,
-  }
-
-  -> file { "${lizardfs::cfgdir}mfschunkserver.cfg":
-    content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
-    notify  => Exec['mfschunkserver reload'],
   }
 
   -> file { "${lizardfs::cfgdir}mfshdd.cfg":
