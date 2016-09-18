@@ -87,6 +87,7 @@ class lizardfs::master(
   $globaliolimits = [],
   $manage_service = true,
   $data_path = '/var/lib/lizardfs',
+  $create_data_path = true,
 )
 {
   validate_string($ensure)
@@ -97,6 +98,7 @@ class lizardfs::master(
   validate_array($topology)
   validate_array($globaliolimits)
   validate_bool($manage_service)
+  validate_bool($create_data_path)
 
   $options_keys = upcase(keys($options))
   if 'PERSONALITY' in $options_keys {
@@ -139,6 +141,16 @@ class lizardfs::master(
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
+  }
+
+  if $create_data_path {
+    file { $data_path:
+      ensure => directory,
+      mode   => $::lizardfs::secure_dir_permission,
+      owner  => $::lizardfs::user,
+      group  => $::lizardfs::group,
+      before => Exec["echo -n 'MFSM NEW' > '${metadata_file}'"],
+    }
   }
 
   exec { $script_generate_mfsmaster:
@@ -229,9 +241,9 @@ class lizardfs::master(
     notify  => Exec['mfsmaster reload']
   }
 
-  -> exec { "echo 'MFSM NEW' > '${metadata_file}'":
-    unless  => "test -f '${metadata_file}'",
-    user    => $::lizardfs::user,
+  -> exec { "echo -n 'MFSM NEW' > '${metadata_file}'":
+    unless => "test -f '${metadata_file}'",
+    user   => $::lizardfs::user,
   }
 
   if $manage_service {
@@ -246,7 +258,7 @@ class lizardfs::master(
     service { $::lizardfs::master_service:
       ensure  => running,
       enable  => true,
-      require => Exec["echo 'MFSM NEW' > '${metadata_file}'"],
+      require => Exec["echo -n 'MFSM NEW' > '${metadata_file}'"],
     }
 
     -> exec { 'mfsmaster reload':
@@ -258,7 +270,7 @@ class lizardfs::master(
     exec { 'mfsmaster reload':
       command     => 'true', # lint:ignore:quoted_booleans
       refreshonly => true,
-      require     => Exec["echo 'MFSM NEW' > '${metadata_file}'"],
+      require     => Exec["echo -n 'MFSM NEW' > '${metadata_file}'"],
     }
   }
 }
