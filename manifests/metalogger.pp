@@ -94,9 +94,9 @@ class lizardfs::metalogger(
 
   if $::lizardfs::manage_packages {
     package { $::lizardfs::metalogger_package:
-      ensure => $ensure,
-      after  => Class['::lizardfs'],
-      before => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
+      ensure  => $ensure,
+      require => Class['::lizardfs'],
+      before  => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
     }
   }
 

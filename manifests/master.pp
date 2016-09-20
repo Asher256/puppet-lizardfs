@@ -198,9 +198,9 @@ class lizardfs::master(
 
   if $::lizardfs::manage_packages {
     package { [$::lizardfs::master_package, $::lizardfs::adm_package]:
-      ensure => $ensure,
-      after  => Class['::lizardfs'],
-      before => Exec["echo '${first_personality}' > '${mfsmaster_personality}'"],
+      ensure  => $ensure,
+      require => Class['::lizardfs'],
+      before  => Exec["echo '${first_personality}' > '${mfsmaster_personality}'"],
     }
   }
 
