@@ -137,11 +137,12 @@ class lizardfs(
 
   # Dependencies
   if $manage_packages {
-    class {'::lizardfs::init::repos': }
+    class {'::lizardfs::init::repos':
+    }
 
+    ->
     package { $common_package:
       ensure => present,
-      after  => Class['::lizardfs::init::repos'],
       before => File[$limits_file],
     }
   }

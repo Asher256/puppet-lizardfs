@@ -69,9 +69,9 @@ class lizardfs::cgi(
 
   if $::lizardfs::manage_packages {
     package { [$::lizardfs::cgi_package, $::lizardfs::cgiserv_package]:
-      ensure => $ensure,
-      after  => Class['::lizardfs'],
-      before => File['/etc/default/lizardfs-cgiserv'],
+      ensure  => $ensure,
+      require => Class['::lizardfs'],
+      before  => File['/etc/default/lizardfs-cgiserv'],
     }
   }
 

@@ -116,9 +116,9 @@ class lizardfs::chunkserver(
 
   if $::lizardfs::manage_packages {
     package { $::lizardfs::chunkserver_package:
-      ensure => $ensure,
-      after  => Class['::lizardfs'],
-      before => File["${lizardfs::cfgdir}mfschunkserver.cfg"],
+      ensure  => $ensure,
+      require => Class['::lizardfs'],
+      before  => File["${lizardfs::cfgdir}mfschunkserver.cfg"],
     }
   }
 
