@@ -154,6 +154,7 @@ class lizardfs::chunkserver(
       ensure  => running,
       enable  => true,
       require => File["${::lizardfs::legacy_cfgdir}mfshdd.cfg"],
+      subscribe => File["${::lizardfs::limits_file}"],
     }
 
     -> exec { 'mfschunkserver reload':

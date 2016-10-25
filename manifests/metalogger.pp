@@ -18,11 +18,10 @@
 # === Examples
 #
 # class {'lizardfs::metalogger':
-#   ensure  => 'present',
-#   options => {'PERSONALITY' => 'metalogger'},
-#   exports => ['*    /    ro'],
-#   goals => ['1 1 : _'],
-#   manage_service => false,
+#   ensure  => '3.10.0-0el7',
+#   options => {'MASTER_HOST'=>'192.168.1.1'},
+#   manage_service => true,
+#   data_path => '/var/lizardfs',
 # }
 #
 # === Parameters
@@ -51,6 +50,7 @@ class lizardfs::metalogger(
   $options = {},
   $manage_service = true,
   $data_path = '/var/lib/lizardfs',
+  $create_data_path = true,
 )
 {
   validate_string($ensure)
@@ -83,6 +83,21 @@ class lizardfs::metalogger(
     mode    => '0644',
   }
 
+  if $create_data_path {
+    exec { "create_data_path":
+       command => "/bin/mkdir -p $data_path",
+       creates => $data_path,
+    }->
+    file { $data_path:
+      ensure => directory,
+      mode   => $::lizardfs::secure_dir_permission,
+      owner  => $::lizardfs::user,
+      group  => $::lizardfs::group,
+      notify => Service[$::lizardfs::metalogger_service],
+      require=> File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
+    }
+  }
+
   if $::lizardfs::create_legacy {
     file { "${::lizardfs::legacy_cfgdir}mfsmetalogger.cfg":
       ensure  => 'link',
@@ -104,6 +119,7 @@ class lizardfs::metalogger(
 
   -> file { "${lizardfs::cfgdir}/mfsmetalogger.cfg":
     content => template('lizardfs/etc/lizardfs/mfsmetalogger.cfg.erb'),
+    require => File[$::lizardfs::cfgdir],
     notify  => Exec['mfsmetalogger reload']
   }
 
@@ -120,6 +136,7 @@ class lizardfs::metalogger(
       ensure  => running,
       enable  => true,
       require => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
+      subscribe => File["${lizardfs::limits_file}"],
     }
 
     -> exec { 'mfsmetalogger reload':
