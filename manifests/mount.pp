@@ -23,20 +23,26 @@
 #
 # === Parameters
 #
-# [*lizardfs_master*] the LizardFS hostname or IP address
+# [*ensure*]
+#   Default value: 'mount'
+#   Add the mount point to fstab and mount it automatically 'absent' to remove
+#   the mount point (This variable is passed to mount{})
 #
-# [*lizardfs_port*] the LizardFS's port
+# [*lizardfs_master*]
+#   The LizardFS hostname or IP address
 #
-# [*lizardfs_subfolder*] the LizardFS subfolder
+# [*lizardfs_port*]
+#   The LizardFS's port
 #
-# [*mountpoint*] the directory where the LizardFS will be mounted
-# If this variable is not defined, $name is used to define the local mount point.
+# [*lizardfs_subfolder*]
+#   The LizardFS subfolder
 #
-# [*options*] the mfsmount options. Example: "noauto"
+# [*mountpoint*]
+#   The directory where the LizardFS will be mounted.
+#   If this variable is not defined, $name is used to define the local mount point.
 #
-# [*ensure*] 'mount' add the mount point to fstab and mount it automatically
-#            'absent' to remove the mount point
-#            (This variable is passed to mount{})
+# [*options*]
+#   The mfsmount options. Example: "noauto"
 #
 
 define lizardfs::mount(
@@ -49,13 +55,11 @@ define lizardfs::mount(
 )
 {
   validate_string($lizardfs_subfolder)
-  validate_re($lizardfs_port, '^\d+$')
+  validate_integer($lizardfs_port)
   validate_string($lizardfs_master)
   validate_string($mountpoint)
   validate_string($options)
   validate_string($ensure)
-
-  include lizardfs::client
 
   if $ensure == 'absent' {
     mount { $mountpoint:
@@ -63,12 +67,15 @@ define lizardfs::mount(
     }
   }
   else {
+    include ::lizardfs::client
+
     $real_mountpoint = $mountpoint ? {
       undef   => $name,
       default => $mountpoint
     }
 
     $base_options = "mfsmaster=${lizardfs_master},mfsport=${lizardfs_port},mfssubfolder=${lizardfs_subfolder},_netdev"
+
     $mount_options = $options ? {
       undef   => $base_options,
       default => "${base_options},${options}",
@@ -86,7 +93,7 @@ define lizardfs::mount(
       options  => $mount_options,
       remounts => false,
       # atboot   => true,
-      require  => Class['lizardfs::client'],
+      require  => Class['::lizardfs::client'],
     }
   }
 }
