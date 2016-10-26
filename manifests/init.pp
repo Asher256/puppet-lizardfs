@@ -139,14 +139,13 @@ class lizardfs(
   if $manage_packages {
     class {'::lizardfs::init::repos':
     }
-
-    ->
-    package { $common_package:
-      ensure => present,
-      before => File[$limits_file],
-    }
   }
-
+  file { "/etc/pam.d/lizardfs":
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    content => "session required pam_limits.so",
+  }->
   file { $limits_file:
     owner   => 'root',
     group   => 'root',
