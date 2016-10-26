@@ -144,6 +144,10 @@ class lizardfs::master(
   }
 
   if $create_data_path {
+    exec { "create_data_path":
+      command => "/bin/mkdir -p $data_path",
+      creates => $data_path,
+    }->
     file { $data_path:
       ensure => directory,
       mode   => $::lizardfs::secure_dir_permission,
@@ -209,11 +213,13 @@ class lizardfs::master(
   -> exec { "echo '${first_personality}' > '${mfsmaster_personality}'":
     unless => "test -f '${mfsmaster_personality}'",
     notify => Exec[$script_generate_mfsmaster],
+    require => File[$::lizardfs::cfgdir],
   }
 
   -> file { $mfsmaster_header:
     content => template('lizardfs/etc/lizardfs/mfsmaster.cfg.erb'),
     notify  => Exec[$script_generate_mfsmaster],
+    require => File[$::lizardfs::cfgdir],
   }
 
   -> file { $script_generate_mfsmaster:
@@ -259,6 +265,7 @@ class lizardfs::master(
       ensure  => running,
       enable  => true,
       require => Exec["echo -n 'MFSM NEW' > '${metadata_file}'"],
+      subscribe => File["${::lizardfs::limits_file}"],
     }
 
     -> exec { 'mfsmaster reload':

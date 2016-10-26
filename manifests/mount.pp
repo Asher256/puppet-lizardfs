@@ -81,6 +81,11 @@ define lizardfs::mount(
       default => "${base_options},${options}",
     }
 
+    exec { "$real_mountpoint":
+      command => "/bin/mkdir -p $real_mountpoint",
+      creates => $real_mountpoint,
+    }->
+
     mount { $real_mountpoint:
       ensure   => $ensure,
       device   => 'mfsmount',
@@ -94,3 +99,4 @@ define lizardfs::mount(
 }
 
 # vim:et:sw=2:ts=2:sts=2:tw=0:fenc=utf-8
+
