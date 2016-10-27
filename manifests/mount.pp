@@ -52,6 +52,7 @@ define lizardfs::mount(
   $mountpoint = undef,
   $options = undef,
   $ensure = 'mounted',
+  $create_mountpoint = false,
 )
 {
   validate_string($lizardfs_subfolder)
@@ -81,10 +82,13 @@ define lizardfs::mount(
       default => "${base_options},${options}",
     }
 
-    exec { "$real_mountpoint":
-      command => "/bin/mkdir -p $real_mountpoint",
-      creates => $real_mountpoint,
-    }->
+    if $create_mountpoint {
+      exec { "$real_mountpoint":
+        command => "/bin/mkdir -p $real_mountpoint",
+        creates => $real_mountpoint,
+        before  => Mount[$real_mountpoint],
+      }
+    }
 
     mount { $real_mountpoint:
       ensure   => $ensure,
