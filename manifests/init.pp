@@ -141,13 +141,6 @@ class lizardfs(
     }
   }
 
-  # file { "/etc/pam.d/lizardfs":
-    # owner   => 'root',
-    # group   => 'root',
-    # mode    => '0644',
-    # content => "session required pam_limits.so",
-  # }
-
   file { $limits_file:
     owner   => 'root',
     group   => 'root',
