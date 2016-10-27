@@ -140,12 +140,7 @@ class lizardfs(
     class {'::lizardfs::init::repos':
     }
   }
-  file { "/etc/pam.d/lizardfs":
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0644',
-    content => "session required pam_limits.so",
-  }->
+
   file { $limits_file:
     owner   => 'root',
     group   => 'root',
@@ -155,6 +150,7 @@ ${user} soft nofile ${max_open_files}
 ${user} hard nofile ${max_open_files}
 ",
   }
+
   -> class {'::lizardfs::init::dirs': }
   -> ::Lizardfs::Mount <||>
 }

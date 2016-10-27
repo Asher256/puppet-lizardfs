@@ -84,17 +84,11 @@ class lizardfs::metalogger(
   }
 
   if $create_data_path {
-    exec { "create_data_path":
-       command => "/bin/mkdir -p $data_path",
-       creates => $data_path,
-    }->
-    file { $data_path:
-      ensure => directory,
-      mode   => $::lizardfs::secure_dir_permission,
-      owner  => $::lizardfs::user,
-      group  => $::lizardfs::group,
-      notify => Service[$::lizardfs::metalogger_service],
-      require=> File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
+    exec { "metalogger: create ${data_path}":
+      command => "install -o '${::lizardfs::user}' -g '${::lizardfs::group}' -d '${data_path}'",
+      creates => $data_path,
+      unless  => "test -e '${data_path}'",
+      before  => File["${::lizardfs::cfgdir}/mfsmetalogger.cfg"],
     }
   }
 
@@ -102,7 +96,7 @@ class lizardfs::metalogger(
     file { "${::lizardfs::legacy_cfgdir}mfsmetalogger.cfg":
       ensure  => 'link',
       target  => "${::lizardfs::cfgdir}mfsmetalogger.cfg",
-      before  => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
+      before  => File["${::lizardfs::cfgdir}/mfsmetalogger.cfg"],
       require => Class['::lizardfs'],
     }
   }
@@ -111,13 +105,13 @@ class lizardfs::metalogger(
     package { $::lizardfs::metalogger_package:
       ensure  => $ensure,
       require => Class['::lizardfs'],
-      before  => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
+      before  => File["${::lizardfs::cfgdir}/mfsmetalogger.cfg"],
     }
   }
 
   Class['::lizardfs']
 
-  -> file { "${lizardfs::cfgdir}/mfsmetalogger.cfg":
+  -> file { "${::lizardfs::cfgdir}/mfsmetalogger.cfg":
     content => template('lizardfs/etc/lizardfs/mfsmetalogger.cfg.erb'),
     require => File[$::lizardfs::cfgdir],
     notify  => Exec['mfsmetalogger reload']
@@ -133,10 +127,10 @@ class lizardfs::metalogger(
     }
 
     service { $::lizardfs::metalogger_service:
-      ensure  => running,
-      enable  => true,
-      require => File["${lizardfs::cfgdir}/mfsmetalogger.cfg"],
-      subscribe => File["${lizardfs::limits_file}"],
+      ensure    => running,
+      enable    => true,
+      require   => File["${::lizardfs::cfgdir}/mfsmetalogger.cfg"],
+      subscribe => File[$::lizardfs::limits_file],
     }
 
     -> exec { 'mfsmetalogger reload':

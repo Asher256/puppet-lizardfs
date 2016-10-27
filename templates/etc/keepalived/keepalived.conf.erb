@@ -1,0 +1,61 @@
+##############################################################################
+# MANAGED BY PUPPET
+# Author: Asher256 <asher256@gmail.com>
+# 
+# This file is part of the module puppet-lizardfs
+# https://github.com/Asher256/puppet-lizardfs
+##############################################################################
+
+global_defs {
+	# Each keepalived should have a different ID because this will be used 
+	# in SMTP alerts
+	lvs_id MFS_<%= @hostname %>
+
+	<% if @email_enabled -%>
+		# notification
+		notification_email_from <%= @email_from %>
+		notification_email {
+			<%= @email_to %>
+		}
+
+		smtp_server <%= @smtp_server %>
+		smtp_connect_timeout 30
+	<% end -%>
+}
+
+vrrp_script chk_mfsmaster {
+	script "mfsmaster isalive"
+	interval <%= @track_script_interval %>   # x seconds
+	fall <%= @track_script_fall %>           # require x failures for KO
+	raise <%= @track_script_raise %>         # require x success for OK
+}
+
+vrrp_instance VI_1 {
+	interface  <%= @interface %>
+	state <%= @state %>
+	nopreempt
+	priority <%= @priority %>
+	virtual_router_id <%= @virtual_router_id %>
+
+	authentication {
+		auth_type PASS
+		auth_pass <%= @auth_pass %>
+	}
+	
+	track_script {
+		chk_mfsmaster
+	}
+	
+	virtual_ipaddress {
+		<% @virtual_ip.each do |ipaddr| %><%= ipaddr %>
+		<% end -%>
+
+	}
+
+	# Switch to MASTER
+	notify_master "<%= @cfgdir %>lfs_failover.sh to_master"
+	
+	# Switch to SHADOW
+	notify_backup "<%= @cfgdir %>lfs_failover.sh to_shadow"
+	notify_fault  "<%= @cfgdir %>lfs_failover.sh to_shadow"
+}

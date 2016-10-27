@@ -78,9 +78,9 @@
 #
 
 class lizardfs::master(
-  $ensure = 'present',
   $first_personality,
   $exports,
+  $ensure = 'present',
   $options = {},
   $goals = [],
   $topology = [],
@@ -92,7 +92,9 @@ class lizardfs::master(
 {
   validate_string($ensure)
   validate_re($first_personality, '^MASTER$|^SHADOW$|^HA-CLUSTER-MANAGED$')
-  validate_array($exports)
+  if ! is_array($exports) and ! is_string($exports) {
+    fail('lizardfs::master::exports need to be a array.')
+  }
   validate_hash($options)
   validate_array($goals)
   validate_array($topology)
@@ -144,16 +146,11 @@ class lizardfs::master(
   }
 
   if $create_data_path {
-    exec { "create_data_path":
-      command => "/bin/mkdir -p $data_path",
+    exec { "master: create ${data_path}":
+      command => "install -o '${::lizardfs::user}' -g '${::lizardfs::group}' -d '${data_path}'",
       creates => $data_path,
-    }->
-    file { $data_path:
-      ensure => directory,
-      mode   => $::lizardfs::secure_dir_permission,
-      owner  => $::lizardfs::user,
-      group  => $::lizardfs::group,
-      before => Exec["echo -n 'MFSM NEW' > '${metadata_file}'"],
+      unless  => "test -e '${data_path}'",
+      before  => Exec["echo -n 'MFSM NEW' > '${metadata_file}'"],
     }
   }
 
@@ -211,8 +208,8 @@ class lizardfs::master(
   Class['::lizardfs']
 
   -> exec { "echo '${first_personality}' > '${mfsmaster_personality}'":
-    unless => "test -f '${mfsmaster_personality}'",
-    notify => Exec[$script_generate_mfsmaster],
+    unless  => "test -f '${mfsmaster_personality}'",
+    notify  => Exec[$script_generate_mfsmaster],
     require => File[$::lizardfs::cfgdir],
   }
 
@@ -227,14 +224,30 @@ class lizardfs::master(
     content => template('lizardfs/etc/lizardfs/generate-mfsmaster.cfg.sh.erb'),
   }
 
-  -> file { "${lizardfs::cfgdir}mfsexports.cfg":
-    content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
-    notify  => Exec['mfsmaster reload']
+  if is_array($exports) {
+    file { "${lizardfs::cfgdir}mfsexports.cfg":
+      content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
+      notify  => Exec['mfsmaster reload'],
+      require => File[$script_generate_mfsmaster],
+      before  => File["${lizardfs::cfgdir}mfsgoals.cfg"],
+    }
+  }
+  elsif is_string($exports)  {
+    file { "${lizardfs::cfgdir}mfsexports.cfg":
+      content => template($exports),
+      notify  => Exec['mfsmaster reload'],
+      require => File[$script_generate_mfsmaster],
+      before  => File["${lizardfs::cfgdir}mfsgoals.cfg"],
+    }
+  }
+  else {
+    fail()
   }
 
-  -> file { "${lizardfs::cfgdir}mfsgoals.cfg":
+  file { "${lizardfs::cfgdir}mfsgoals.cfg":
     content => template('lizardfs/etc/lizardfs/mfsgoals.cfg.erb'),
-    notify  => Exec['mfsmaster reload']
+    notify  => Exec['mfsmaster reload'],
+    require => File[$script_generate_mfsmaster],
   }
 
   -> file { "${lizardfs::cfgdir}mfstopology.cfg":
@@ -262,10 +275,10 @@ class lizardfs::master(
     }
 
     service { $::lizardfs::master_service:
-      ensure  => running,
-      enable  => true,
-      require => Exec["echo -n 'MFSM NEW' > '${metadata_file}'"],
-      subscribe => File["${::lizardfs::limits_file}"],
+      ensure    => running,
+      enable    => true,
+      require   => Exec["echo -n 'MFSM NEW' > '${metadata_file}'"],
+      subscribe => File[$::lizardfs::limits_file],
     }
 
     -> exec { 'mfsmaster reload':
