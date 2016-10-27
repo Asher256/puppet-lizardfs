@@ -149,6 +149,7 @@ class lizardfs::master(
     exec { "master: create ${data_path}":
       command => "install -o '${::lizardfs::user}' -g '${::lizardfs::group}' -d '${data_path}'",
       creates => $data_path,
+      unless  => "test -e '${data_path}'",
       notify  => Service[$::lizardfs::master_service],
       before  => Exec["echo -n 'MFSM NEW' > '${metadata_file}'"],
     }
