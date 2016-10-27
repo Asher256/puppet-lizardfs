@@ -92,7 +92,9 @@ class lizardfs::master(
 {
   validate_string($ensure)
   validate_re($first_personality, '^MASTER$|^SHADOW$|^HA-CLUSTER-MANAGED$')
-  validate_array($exports)
+  if ! is_hash($exports) and ! is_string($exports) {
+    fail('lizardfs::master::exports need to be a hash.')
+  }
   validate_hash($options)
   validate_array($goals)
   validate_array($topology)
@@ -222,14 +224,27 @@ class lizardfs::master(
     content => template('lizardfs/etc/lizardfs/generate-mfsmaster.cfg.sh.erb'),
   }
 
-  -> file { "${lizardfs::cfgdir}mfsexports.cfg":
-    content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
-    notify  => Exec['mfsmaster reload']
+  if is_hash($exports) {
+    file { "${lizardfs::cfgdir}mfsexports.cfg":
+      content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
+      notify  => Exec['mfsmaster reload'],
+      require => File[$script_generate_mfsmaster],
+      before  => File["${lizardfs::cfgdir}mfsgoals.cfg"],
+    }
+  }
+  elsif is_string($exports)  {
+    file { "${lizardfs::cfgdir}mfsexports.cfg":
+      content => template($exports),
+      notify  => Exec['mfsmaster reload'],
+      require => File[$script_generate_mfsmaster],
+      before  => File["${lizardfs::cfgdir}mfsgoals.cfg"],
+    }
   }
 
-  -> file { "${lizardfs::cfgdir}mfsgoals.cfg":
+  file { "${lizardfs::cfgdir}mfsgoals.cfg":
     content => template('lizardfs/etc/lizardfs/mfsgoals.cfg.erb'),
-    notify  => Exec['mfsmaster reload']
+    notify  => Exec['mfsmaster reload'],
+    require => File[$script_generate_mfsmaster],
   }
 
   -> file { "${lizardfs::cfgdir}mfstopology.cfg":
