@@ -88,7 +88,6 @@ class lizardfs::metalogger(
       command => "install -o '${::lizardfs::user}' -g '${::lizardfs::group}' -d '${data_path}'",
       creates => $data_path,
       unless  => "test -e '${data_path}'",
-      notify  => Service[$::lizardfs::metalogger_service],
       before  => File["${::lizardfs::cfgdir}/mfsmetalogger.cfg"],
     }
   }
