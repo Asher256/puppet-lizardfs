@@ -92,8 +92,8 @@ class lizardfs::master(
 {
   validate_string($ensure)
   validate_re($first_personality, '^MASTER$|^SHADOW$|^HA-CLUSTER-MANAGED$')
-  if ! is_hash($exports) and ! is_string($exports) {
-    fail('lizardfs::master::exports need to be a hash.')
+  if ! is_array($exports) and ! is_string($exports) {
+    fail('lizardfs::master::exports need to be a array.')
   }
   validate_hash($options)
   validate_array($goals)
@@ -224,7 +224,7 @@ class lizardfs::master(
     content => template('lizardfs/etc/lizardfs/generate-mfsmaster.cfg.sh.erb'),
   }
 
-  if is_hash($exports) {
+  if is_array($exports) {
     file { "${lizardfs::cfgdir}mfsexports.cfg":
       content => template('lizardfs/etc/lizardfs/mfsexports.cfg.erb'),
       notify  => Exec['mfsmaster reload'],
@@ -239,6 +239,9 @@ class lizardfs::master(
       require => File[$script_generate_mfsmaster],
       before  => File["${lizardfs::cfgdir}mfsgoals.cfg"],
     }
+  }
+  else {
+    fail()
   }
 
   file { "${lizardfs::cfgdir}mfsgoals.cfg":
