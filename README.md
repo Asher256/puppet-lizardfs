@@ -71,31 +71,31 @@ class {'lizardfs::metalogger':
 
 ## High-Availability
 
-The Puppet module "puppet-lizardfs" is ready for HA (High-Availability), but you still need to configure the High-Availability yourself with a tool like Keepalived or Pacemaker.
+The Puppet module "puppet-lizardfs" is ready for the High-Availability (BETA).
 
-Puppet-lizardfs is "Ready for high-availability" means:
-- Once the 'PERSONALITY' is set in 'mfsmaster.cfg' (with the variable lizardfs::master::first_personality), the variable 'PERSONALITY' is not overwritten by Puppet anymore.
+You can try the BETA version of the keepalived class lizardfs::ha::keepalived .
+
+(The Pacemaker support is coming. Check the Pacemaker GIT branch if you want to test it or improve it).
+
+How the lizardfs::ha::keepalived works? First, let me explain how the "PERSONALITY" is managed by puppet-lizardfs:
+- The first time the 'PERSONALITY' is set in 'mfsmaster.cfg' (with the variable lizardfs::master::first_personality), the variable 'PERSONALITY' is not overwritten by Puppet anymore.
 - The fact that "PERSONALITY" is not overwritten by Puppet gives you the possibility to modify the personality with a tool like keepalived, generate mfsmaster.cfg with the new personality and restart the LizardFS master. Your high-availability scripts can change the personality with this script created by puppet-lizardfs /etc/lizardfs/generate-mfsmaster-cfg.sh
 
-If you want to switch the personality from SHADOW to MASTER with your failover script:
+The class lizardfs::ha::keepalived (BETA) will switch the personality from SHADOW to MASTER with the failover script. The failover script does something like this::
 ```
 /etc/lizardfs/generate-mfsmaster-cfg.sh MASTER
 mfsmaster reload         # reload is enough
 ```
 
-To switch the personality from MASTER to SHADOW:
+And to switch the personality from MASTER to SHADOW:
 ```
 /etc/lizardfs/generate-mfsmaster-cfg.sh SHADOW
 mfsmaster restart        # RESTART is needed to switch from MASTER to SHADOW
 ```
 
-(for those who want to use keepalived to configure the high-availability, I recommend you to use the module https://forge.puppet.com/arioch/keepalived with puppet-lizardfs)
-
 ## Requirements
 
 - Operating system: Debian, Ubuntu, CentOS, RedHat
-
-On CentOS, Ubuntu and Debian, puppet-lizardfs works out of the box.
 
 ## Contribute
 
