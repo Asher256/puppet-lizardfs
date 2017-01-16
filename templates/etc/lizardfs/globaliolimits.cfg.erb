@@ -1,0 +1,20 @@
+#############################################################################
+# MANAGED BY PUPPET
+#############################################################################
+<% @globaliolimits.each do |line| %>
+<%= line %><% end -%>
+
+#############################################################################
+# Help
+# 
+# globaliolimits.cfg(5) 
+#############################################################################
+# This is an example global IO limiting configuration file.
+
+# subsystem blkio
+
+# limit unclassified 1234
+
+# limit /some_group               2345
+# limit /some_group/some_subgroup 3456
+# limit /another_group            4567

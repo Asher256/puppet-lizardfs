@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+#
+# This script will generate <%= @cfgdir %>mfsmaster.cfg
+#
+# Copyright (c) Asher256
+# License: Apache 2.0
+#
+# URL: https://github.com/Asher256/puppet-lizardfs
+#
+# This source code follows the Google style guide for shell scripts:
+# https://google.github.io/styleguide/shell.xml
+#
+
+set -o errexit
+set -o nounset
+# set -o xtrace
+
+function bash_traceback() {
+  local lasterr="$?"
+  set +o xtrace
+  local code="-1"
+  local bash_command=${BASH_COMMAND}
+  echo "Error in ${BASH_SOURCE[1]}:${BASH_LINENO[0]} ('$bash_command' exited with status $lasterr)"
+  if [ ${#FUNCNAME[@]} -gt 2 ]; then
+    # Print out the stack trace described by $function_stack
+    echo "Traceback of ${BASH_SOURCE[1]} (most recent call last):"
+    for ((i=0; i < ${#FUNCNAME[@]} - 1; i++)); do
+    local funcname="${FUNCNAME[$i]}"
+    [ "$i" -eq "0" ] && funcname=$bash_command
+    echo -e "  ${BASH_SOURCE[$i+1]}:${BASH_LINENO[$i]}\t$funcname"
+    done
+  fi
+  echo "Exiting with status ${code}"
+  exit "${code}"
+}
+
+# provide an error handler whenever a command exits nonzero
+trap 'bash_traceback' ERR
+
+# propagate ERR trap handler functions, expansions and subshells
+set -o errtrace
+
+switch_mfsmastercfg_to() {
+  local personality
+  
+  if ! [ -f '<%= @mfsmaster_personality %>' ]; then
+    echo "ERROR: '<%= @mfsmaster_personality %>' does not exist." >&2
+    exit 1
+  fi
+  
+  if [ "$#" -lt 1 ]; then
+    echo "Usage: $0 [MASTER|SHADOW|HA-CLUSTER-MANAGED]" >&2
+    echo
+    exit 1
+  fi
+
+  personality="$1"
+  if [ "$personality" != "MASTER" ] && [ "$personality" != "SHADOW" ] && [ "$personality" != "HA-CLUSTER-MANAGED" ]; then
+    echo "ERROR: the personality '$personality' you provided is wrong." \
+         "The allowed values: 'MASTER' or 'SHADOW' or 'HA-CLUSTER-MANAGED' (in the upper case)." >&2
+    exit 1
+  fi
+
+  echo "$personality" > '<%= @mfsmaster_personality %>'
+  echo "SUCCESS: '<%= @mfsmaster_personality %>' switched to $personality"
+
+  <%= @script_generate_mfsmaster %> || exit 1
+
+  exit 0
+}
+
+main() {
+  if [ "$#" -gt 0 ]; then
+    switch_mfsmastercfg_to "$@"
+    exit "$?"
+  fi
+  
+  if ! [ -f '<%= @mfsmaster_personality %>' ]; then
+    echo "ERROR: '<%= @mfsmaster_personality %>' does not exist." >&2
+    exit 1
+  fi
+
+  {
+    local personality
+    personality=$(head -n 1 < '<%= @mfsmaster_personality %>')
+    cat '<%= @mfsmaster_header %>'
+    echo
+    echo '# VARIABLE ADDED FROM <%= @mfsmaster_personality %>'
+    echo "PERSONALITY = $personality"
+  } > '<%= @cfgdir %>mfsmaster.cfg'
+  echo "SUCCESS: '<%= @cfgdir %>mfsmaster.cfg' was generated successfully."
+  
+  personality=$(head -n 1 < '<%= @mfsmaster_personality %>')
+  echo "(current personality: $personality)"
+
+  exit 0
+}
+
+# MAIN
+main "$@"
+
+# vim:ai:et:sw=2:ts=2:sts=2:tw=0:fenc=utf-8:foldmethod=indent
