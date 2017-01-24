@@ -102,7 +102,7 @@ class lizardfs::chunkserver(
 
   if $create_data_path {
     exec { "chunkserver: create ${data_path}":
-      command => "install -o '${::lizardfs::user}' -g '${::lizardfs::group}' -d '${data_path}'",
+      command => "install -o '${::lizardfs::user}' -g '${::lizardfs::group}' -d '${data_path}' -m '${::lizardfs::secure_dir_permission}'",
       creates => $data_path,
       unless  => "test -e '${data_path}'",
       before  => File["${lizardfs::cfgdir}mfschunkserver.cfg"],
