@@ -60,6 +60,7 @@ class lizardfs::chunkserver(
   $options = {},
   $manage_service = true,
   $data_path = '/var/lib/lizardfs',
+  $create_data_path = true,
 )
 {
   validate_string($ensure)
@@ -67,6 +68,7 @@ class lizardfs::chunkserver(
   validate_array($hdd_disabled)
   validate_hash($options)
   validate_bool($manage_service)
+  validate_bool($create_data_path)
 
   if empty($hdd) and empty($hdd_disabled) {
     fail('You need to add at least one directory to the array \'lizardfs::chunkserver::hdd\' OR \'lizardfs::chunkserver::hdd_disabled\'.')
@@ -96,6 +98,15 @@ class lizardfs::chunkserver(
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
+  }
+
+  if $create_data_path {
+    exec { "chunkserver: create ${data_path}":
+      command => "install -o '${::lizardfs::user}' -g '${::lizardfs::group}' -d '${data_path}'",
+      creates => $data_path,
+      unless  => "test -e '${data_path}'",
+      before  => File["${lizardfs::cfgdir}mfschunkserver.cfg"],
+    }
   }
 
   if $::lizardfs::create_legacy {
