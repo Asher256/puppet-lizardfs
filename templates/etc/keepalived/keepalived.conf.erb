@@ -32,7 +32,9 @@ vrrp_script chk_mfsmaster {
 
 vrrp_instance VI_1 {
 	interface  <%= @interface %>
+<% if @state != nil -%>
 	state <%= @state %>
+<% end -%>
 	nopreempt
 	priority <%= @priority %>
 	virtual_router_id <%= @virtual_router_id %>

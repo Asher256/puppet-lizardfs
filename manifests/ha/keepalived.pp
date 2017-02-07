@@ -24,8 +24,6 @@
 #
 # [*priority*] keepalived priority (e.g. 100)
 #
-# [*state*] keepalived state (MASTER or BACKUP)
-#
 # [*auth_pass] the authentication password
 #
 # [*virtual_ip*] the virtual IP address (need to be a list)
@@ -44,12 +42,13 @@
 #
 # [*track_script_raise*] requires x success for OK status (keepalived)
 #
+# [*state*] keepalived state (MASTER or BACKUP)
+#
 
 class lizardfs::ha::keepalived(
   $interface,
   $auth_pass,
   $virtual_ip,
-  $state,
   $lvs_id,
   $virtual_router_id = 99,
   $priority = 100,
@@ -60,6 +59,7 @@ class lizardfs::ha::keepalived(
   $track_script_interval = 10,
   $track_script_fall = 5,
   $track_script_raise = 2,
+  $state = undef,
 ) {
   validate_string($interface)
   validate_integer($priority)
