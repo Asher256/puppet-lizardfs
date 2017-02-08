@@ -3,7 +3,7 @@
 # lfs_failover.sh
 # Script used by keepalived to provide a highly-available LizardFS
 #
-# Author: Asher256 <asher256@gmail.com>
+# Author: Achraf Cherti <asher256@gmail.com>
 #
 # This source code follows the Google style guide for shell scripts:
 # https://google.github.io/styleguide/shell.xml

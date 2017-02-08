@@ -4,7 +4,7 @@
 #
 # === Authors
 #
-# Copyright (c) Asher256
+# Copyright (c) Achraf Cherti (aka Asher256)
 #
 # License: Apache 2.0
 # Contact: asher256@gmail.com
