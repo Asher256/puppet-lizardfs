@@ -3,7 +3,11 @@
 # lfs_failover.sh
 # Script used by keepalived to provide a highly-available LizardFS
 #
-# Author: Asher256
+# Copyright (c) Asher256
+#
+# License: Apache 2.0
+#
+# URL: https://github.com/Asher256/puppet-lizardfs
 #
 # This source code follows the Google style guide for shell scripts:
 # https://google.github.io/styleguide/shell.xml
