@@ -1,9 +1,9 @@
 # puppet-lizardfs
 
-- Author: Asher256
-- Contributors: Chioralia
 - Github repository: https://github.com/Asher256/puppet-lizardfs
 - Puppet Forge page: https://forge.puppet.com/Asher256/lizardfs/readme
+- Author: Asher256
+- Contributors: Chioralia Florin (aka Chioralia)
 
 #### Table of Contents
 
