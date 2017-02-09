@@ -122,11 +122,11 @@ start_when_mfsmaster_stopped() {
   local end
   end=$((SECONDS+60))
   while (( SECONDS < end )); do
-    ! pidof mfsmaster >/dev/null 2>&1 && break
+    ! mfsmaster isalive >/dev/null 2>&1 && break
     sleep "0.5"
   done
 
-  if pidof mfsmaster >/dev/null 2>&1; then
+  if ! mfsmaster isalive >/dev/null 2>&1; then
     logging_info "[LIZARDFS FAILOVER ERROR] failed to stop mfsmaster. mfsmaster need to be stopped and started manually."
     exit 1
   fi
