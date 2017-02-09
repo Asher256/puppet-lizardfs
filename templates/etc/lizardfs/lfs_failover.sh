@@ -94,7 +94,7 @@ reload_mfsmaster() {
 }
 
 start_mfsmaster() {
-<% if @nginx_listen_address != nil -%>
+<% if @failover_mfsmetarestore == true -%>
   mfsmetarestore -a -d '<%= @lizardfs::master::data_path %>'
 <% end -%>
 
