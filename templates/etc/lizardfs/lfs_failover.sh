@@ -95,7 +95,7 @@ reload_mfsmaster() {
 
 start_mfsmaster() {
 <% if @failover_mfsmetarestore == true -%>
-  mfsmetarestore -a -d '<%= @lizardfs::master::data_path %>'
+  mfsmetarestore -a -d '<%= @master_data_path %>'
 <% end -%>
 
   if pidof mfsmaster >/dev/null 2>&1; then

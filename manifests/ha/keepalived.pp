@@ -78,6 +78,8 @@ class lizardfs::ha::keepalived(
 
   include ::lizardfs::master
 
+  $master_data_path = $::lizardfs::master::data_path
+
   File {
     ensure  => present,
     mode    => '0644',
