@@ -94,6 +94,10 @@ reload_mfsmaster() {
 }
 
 start_mfsmaster() {
+<% if @nginx_listen_address != nil -%>
+  mfsmetarestore -a -d '<%= @lizardfs::master::data_path %>'
+<% end -%>
+
   if pidof mfsmaster >/dev/null 2>&1; then
     logging_info "Warning: 'mfsmaster start' ignored because mfsmaster is already running"
     return 0
