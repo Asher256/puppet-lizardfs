@@ -126,7 +126,7 @@ start_when_mfsmaster_stopped() {
     sleep "0.5"
   done
 
-  if ! mfsmaster isalive >/dev/null 2>&1; then
+  if mfsmaster isalive >/dev/null 2>&1; then
     logging_info "[LIZARDFS FAILOVER ERROR] failed to stop mfsmaster. mfsmaster need to be stopped and started manually."
     exit 1
   fi
