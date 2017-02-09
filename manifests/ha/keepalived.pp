@@ -44,6 +44,8 @@
 #
 # [*state*] keepalived state (MASTER or BACKUP)
 #
+# [*failover_mfsmetarestore*] run 'mfsmetarestore -a' before starting mfsmaster during the failover
+#
 
 class lizardfs::ha::keepalived(
   $interface,
@@ -60,6 +62,7 @@ class lizardfs::ha::keepalived(
   $track_script_fall = 5,
   $track_script_raise = 2,
   $state = undef,
+  $failover_mfsmetarestore = false,
 ) {
   validate_string($interface)
   validate_integer($priority)
