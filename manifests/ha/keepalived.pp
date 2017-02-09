@@ -74,6 +74,7 @@ class lizardfs::ha::keepalived(
   validate_string($email_to)
   validate_string($email_from)
   validate_string($smtp_server)
+  validate_bool($failover_mfsmetarestore)
 
   include ::lizardfs::master
 
