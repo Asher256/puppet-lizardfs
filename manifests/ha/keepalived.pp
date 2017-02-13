@@ -44,7 +44,10 @@
 #
 # [*state*] keepalived state (MASTER or BACKUP)
 #
-# [*failover_mfsmetarestore*] run 'mfsmetarestore -a' before starting mfsmaster during the failover
+# [*failover_mfsmetarestore*] true to run 'mfsmetarestore -a' before "mfsmaster start".
+#                             This feature is UNTESTED and I recommend you to
+#                             set AUTO_RECOVERY=1 in /etc/lizardfs/mfsmaster.cfg instead.
+#                             (you can use: lizardfs::master::options={'AUTO_RECOVERY' => 1])
 #
 
 class lizardfs::ha::keepalived(
