@@ -60,6 +60,7 @@ check_errors() {
 
   local path
 
+  # check if all source files exist
   for path in "${BACKUP_SOURCE_FILES[@]}"; do
     if ! [[ -e "$path" ]]; then
       echo "ERROR: the path '$path' does not exist." >&2
@@ -67,6 +68,7 @@ check_errors() {
     fi
   done
 
+  # check the directory of the destination file
   path=''
   path=$(readlink -e "$BACKUP_DEST_FILE" || true)
   path=$(dirname "$path" || true)
@@ -75,6 +77,7 @@ check_errors() {
     exit 1
   fi
 
+  # check the extension
   if ! [[ $BACKUP_DEST_FILE =~ \.tar\.gz$ ]]; then
     echo "ERROR: the extension of '$BACKUP_DEST_FILE' needs to be '.tar.gz'." >&2
     exit 1
@@ -147,7 +150,7 @@ main() {
   SUCCESS=0
 
   if [[ $# -lt 2 ]]; then
-    echo "Usage: $0 <LIZARDFS-METADATA-PATH> <PATH-TO-BACKUP.gz>" >&2
+    echo "Usage: $0 <FILE1> <FILE2> <DIR1> ... <PATH-TO-BACKUP.gz>" >&2
     echo "" >&2
     echo "Example: $0 /var/lib/lizardfs /opt/data/backup/lizardfs-metadata-backup" >&2
     exit 1
