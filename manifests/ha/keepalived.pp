@@ -104,7 +104,7 @@ class lizardfs::ha::keepalived(
   -> file { "${::lizardfs::cfgdir}lfs_failover.sh":
     ensure  => present,
     mode    => '0700',
-    content => template('lizardfs/etc/lizardfs/lfs_failover.sh'),
+    content => template('lizardfs/etc/lizardfs/lfs_failover.sh.erb'),
   }
 
   # TODO: remove this file
