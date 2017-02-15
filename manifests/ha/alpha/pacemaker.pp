@@ -1,6 +1,12 @@
 #
 # == Define: lizardfs::ha::pacemaker
 #
+# ------------------------------------------------------------------
+# WARNING: this module is in the alpha stage. It needs to be tested.
+#          Community help is encouraged, to test it in different
+#          operating systems.
+# ------------------------------------------------------------------
+#
 # 'lizardfs::ha::pacemaker': install and configure corosync and pacemaker for
 # HA LizardFS.
 #
