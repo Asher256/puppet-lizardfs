@@ -75,7 +75,7 @@ The Puppet module "puppet-lizardfs" is ready for the High-Availability (BETA).
 
 You can try the BETA version of the keepalived class lizardfs::ha::keepalived .
 
-(The Pacemaker support is coming. Check the Pacemaker GIT branch if you want to test it or improve it).
+(The Pacemaker support is coming. Check the ALPHA version in manifests/ha/alpha/pacemaker.pp if you want to test it or improve it).
 
 How the lizardfs::ha::keepalived works? First, let me explain how the "PERSONALITY" is managed by puppet-lizardfs:
 - The first time the 'PERSONALITY' is set in 'mfsmaster.cfg' (with the variable lizardfs::master::first_personality), the variable 'PERSONALITY' is not overwritten by Puppet anymore.
