@@ -170,7 +170,7 @@ main() {
   # backup the file
   echo "[BACKUP] ${BACKUP_SOURCE_FILES[*]} --> ${BACKUP_DEST_FILE}"
   #if tar -c --use-compression-program=pigz -f "$BACKUP_DEST_FILE" "$BACKUP_SOURCE_FILES"; then
-  if tar --verbose -c -f - "${BACKUP_SOURCE_FILES[@]}" | pigz --stdout > "$BACKUP_DEST_FILE"; then
+  if tar -c -f - "${BACKUP_SOURCE_FILES[@]}" | pigz --stdout > "$BACKUP_DEST_FILE"; then
     echo
     echo "[BACKUP SUCCESSFUL] $BACKUP_DEST_FILE"
     SUCCESS=1
