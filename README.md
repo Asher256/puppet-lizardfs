@@ -73,18 +73,15 @@ class {'lizardfs::metalogger':
 
 The Puppet module "puppet-lizardfs" is ready for the High-Availability (BETA).
 
-You can try the BETA version of the keepalived class lizardfs::ha::keepalived .
-
-(The Pacemaker support is coming. Check the ALPHA version in manifests/ha/alpha/pacemaker.pp if you want to test it or improve it).
-
-How the lizardfs::ha::keepalived works? First, let me explain how the "PERSONALITY" is managed by puppet-lizardfs:
-- The first time the 'PERSONALITY' is set in 'mfsmaster.cfg' (with the variable lizardfs::master::first_personality), the variable 'PERSONALITY' is not overwritten by Puppet anymore.
-- The fact that "PERSONALITY" is not overwritten by Puppet gives you the possibility to modify the personality with a tool like keepalived, generate mfsmaster.cfg with the new personality and restart the LizardFS master. Your high-availability scripts can change the personality with this script created by puppet-lizardfs /etc/lizardfs/generate-mfsmaster-cfg.sh
-
-The class lizardfs::ha::keepalived (BETA) will switch the personality from SHADOW to MASTER with the failover script. The failover script.
-
-Example of a highly-available configuration for a keepalived master:
+You can try the BETA version of the keepalived class lizardfs::ha::keepalived
+starting by now. Example:
 ```
+class {'lizardfs::master':
+  ensure              => 'present',
+  first_personality   => 'MASTER',
+  exports             => ['*    /    ro'],
+}
+
 class {'lizardfs::ha::keepalived':
   interface          => "eth0",
   virtual_router_id  => "246",
@@ -97,6 +94,17 @@ class {'lizardfs::ha::keepalived':
   lvs_id             => "LIZARDFS_$${:fqdn}",
 }
 ```
+
+How the lizardfs::ha::keepalived works? First, let me explain how the
+"PERSONALITY" is managed by puppet-lizardfs:
+- The first time the 'PERSONALITY' is set in 'mfsmaster.cfg' (with the variable lizardfs::master::first_personality), the variable 'PERSONALITY' is not overwritten by Puppet anymore.
+- The fact that "PERSONALITY" is not overwritten by Puppet gives you the possibility to modify the personality with a tool like keepalived, generate mfsmaster.cfg with the new personality and restart the LizardFS master. Your high-availability scripts can change the personality with this script created by puppet-lizardfs /etc/lizardfs/generate-mfsmaster-cfg.sh
+
+The class lizardfs::ha::keepalived (BETA) will switch the personality from
+SHADOW to MASTER with the failover script. The failover script.
+
+(The Pacemaker support is coming. Check the ALPHA version in
+manifests/ha/alpha/pacemaker.pp if you want to test it or improve it).
 
 ## Requirements
 
