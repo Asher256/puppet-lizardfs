@@ -81,16 +81,21 @@ How the lizardfs::ha::keepalived works? First, let me explain how the "PERSONALI
 - The first time the 'PERSONALITY' is set in 'mfsmaster.cfg' (with the variable lizardfs::master::first_personality), the variable 'PERSONALITY' is not overwritten by Puppet anymore.
 - The fact that "PERSONALITY" is not overwritten by Puppet gives you the possibility to modify the personality with a tool like keepalived, generate mfsmaster.cfg with the new personality and restart the LizardFS master. Your high-availability scripts can change the personality with this script created by puppet-lizardfs /etc/lizardfs/generate-mfsmaster-cfg.sh
 
-The class lizardfs::ha::keepalived (BETA) will switch the personality from SHADOW to MASTER with the failover script. The failover script does something like this::
-```
-/etc/lizardfs/generate-mfsmaster-cfg.sh MASTER
-mfsmaster reload         # reload is enough
-```
+The class lizardfs::ha::keepalived (BETA) will switch the personality from SHADOW to MASTER with the failover script. The failover script.
 
-And to switch the personality from MASTER to SHADOW:
+Example of a highly-available configuration for a keepalived master:
 ```
-/etc/lizardfs/generate-mfsmaster-cfg.sh SHADOW
-mfsmaster restart        # RESTART is needed to switch from MASTER to SHADOW
+class {'lizardfs::ha::keepalived':
+  interface          => "eth0",
+  virtual_router_id  => "246",
+  auth_pass          => "ThePassword",
+  email_enabled      => true,
+  email_from         => "from-email@gmail.com",
+  smtp_server        => "smtp.domain.com",
+  email_to           => "youremail@gameloft.com",
+  virtual_ip         => ["10.10.10.2/24 dev eth0 label eth0:mfsmaster"],
+  lvs_id             => "LIZARDFS_$${:fqdn}",
+}
 ```
 
 ## Requirements
