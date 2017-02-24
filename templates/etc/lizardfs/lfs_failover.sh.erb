@@ -175,24 +175,24 @@ main() {
   logging_info "[LIZARDFS FAILOVER] Changing mfsmaster to $NEW_PERSONALITY"
   '<%= @script_generate_mfsmaster %>' "$NEW_PERSONALITY" >/dev/null
   
-  if [ "$SYSTEMD_ENABLED" -eq 1 ]; then
-    systemctl restart lizardfs-master
-  else
-    mfsmaster stop 
-  fi
+  # if [ "$SYSTEMD_ENABLED" -eq 1 ]; then
+  #   systemctl restart lizardfs-master
+  # else
+  #   mfsmaster stop 
+  # fi
   
-  #if [ "$NEW_PERSONALITY" = "MASTER" ]; then
-  #  if ! pidof mfsmaster >/dev/null 2>&1; then
-  #    start_mfsmaster
-  #  else
-  #    # from shadow to master, we can to a reload!
-  #    reload_mfsmaster
-  #  fi
-  #else
-  #  stop_mfsmaster
-  #  start_when_mfsmaster_stopped
-  #  start_mfsmaster
-  #fi
+  if [ "$NEW_PERSONALITY" = "MASTER" ]; then
+    if ! pidof mfsmaster >/dev/null 2>&1; then
+      start_mfsmaster
+    else
+      # from shadow to master, we can to a reload!
+      reload_mfsmaster
+    fi
+  else
+    stop_mfsmaster
+    start_when_mfsmaster_stopped
+    start_mfsmaster
+  fi
 
   logging_info "[SUCCESS] switched to $NEW_PERSONALITY successfully"
 
