@@ -41,6 +41,7 @@ vrrp_instance VI_1 {
 	state <%= @state %>
 <% end -%>
 	nopreempt
+	advert_int 1
 	priority <%= @priority %>
 	virtual_router_id <%= @virtual_router_id %>
 
