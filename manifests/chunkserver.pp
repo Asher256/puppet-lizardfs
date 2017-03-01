@@ -32,9 +32,7 @@
 #   https://github.com/lizardfs/lizardfs/blob/master/doc/mfschunkserver.cfg.5.txt
 #
 # [*hdd*]
-#   A list of mount points that will:
-#     1. Created automatically by Puppet (with file {})
-#     2. Added to /etc/lizardfs/mfshdd.cfg
+#   A list of mount points that will be added to /etc/lizardfs/mfshdd.cfg
 #
 # [*hdd_disabled*]
 #   A list of mount points that will be 'marked for removal'.
@@ -138,13 +136,6 @@ class lizardfs::chunkserver(
   -> file { "${lizardfs::cfgdir}mfschunkserver.cfg":
     content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
     notify  => Exec['mfschunkserver reload'],
-  }
-
-  -> file { $hdd:
-    ensure => directory,
-    mode   => $::lizardfs::secure_dir_permission,
-    owner  => $::lizardfs::user,
-    group  => $::lizardfs::group,
   }
 
   -> file { "${lizardfs::cfgdir}mfshdd.cfg":
