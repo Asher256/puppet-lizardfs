@@ -144,7 +144,6 @@ class lizardfs::chunkserver(
 
   -> file { "${lizardfs::cfgdir}mfschunkserver.cfg":
     content => template('lizardfs/etc/lizardfs/mfschunkserver.cfg.erb'),
-    notify  => Exec['mfschunkserver reload'],
   }
 
   if $create_hdd {
@@ -158,9 +157,9 @@ class lizardfs::chunkserver(
     }
   }
 
+  # This needs to be the last modified (dependencies below)
   file { "${lizardfs::cfgdir}mfshdd.cfg":
     content => template('lizardfs/etc/lizardfs/mfshdd.cfg.erb'),
-    notify  => Exec['mfschunkserver reload'],
   }
 
   if $manage_service {
@@ -173,22 +172,17 @@ class lizardfs::chunkserver(
     }
 
     service { $::lizardfs::chunkserver_service:
-      ensure  => running,
-      enable  => true,
-      require => File["${::lizardfs::legacy_cfgdir}mfshdd.cfg"],
-      subscribe => File["${::lizardfs::limits_file}"],
+      ensure    => running,
+      enable    => true,
+      require   => File["${::lizardfs::legacy_cfgdir}mfshdd.cfg"],
+      subscribe => [File["${::lizardfs::limits_file}"],
+                    File["${lizardfs::cfgdir}mfshdd.cfg"],
+                    File["${lizardfs::cfgdir}mfschunkserver.cfg"]],
     }
 
     -> exec { 'mfschunkserver reload':
       command     => 'mfschunkserver reload',
       refreshonly => true,
-    }
-  }
-  else {
-    exec { 'mfschunkserver reload':
-      command     => 'true',    # lint:ignore:quoted_booleans
-      refreshonly => true,
-      require     => File["${::lizardfs::legacy_cfgdir}mfshdd.cfg"],
     }
   }
 }
