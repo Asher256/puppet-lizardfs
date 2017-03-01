@@ -52,6 +52,10 @@
 #   More informations about DATA_PATH can be found in this page:
 #   https://github.com/lizardfs/lizardfs/blob/master/doc/mfschunkserver.cfg.5.txt
 #
+# [*create_data_path*] create the $data_path
+#
+# [*create_hdd*] create all directories in the array $hdd
+#
 
 class lizardfs::chunkserver(
   $ensure = 'present',
@@ -61,6 +65,7 @@ class lizardfs::chunkserver(
   $manage_service = true,
   $data_path = '/var/lib/lizardfs',
   $create_data_path = true,
+  $create_hdd = true,
 )
 {
   validate_string($ensure)
@@ -68,7 +73,9 @@ class lizardfs::chunkserver(
   validate_array($hdd_disabled)
   validate_hash($options)
   validate_bool($manage_service)
+  validate_string($data_path)
   validate_bool($create_data_path)
+  validate_bool($create_hdd)
 
   if empty($hdd) and empty($hdd_disabled) {
     fail('You need to add at least one directory to the array \'lizardfs::chunkserver::hdd\' OR \'lizardfs::chunkserver::hdd_disabled\'.')
@@ -140,14 +147,18 @@ class lizardfs::chunkserver(
     notify  => Exec['mfschunkserver reload'],
   }
 
-  -> file { $hdd:
-    ensure => directory,
-    mode   => $::lizardfs::secure_dir_permission,
-    owner  => $::lizardfs::user,
-    group  => $::lizardfs::group,
+  if $create_hdd {
+    file { $hdd:
+      ensure  => directory,
+      mode    => $::lizardfs::secure_dir_permission,
+      owner   => $::lizardfs::user,
+      group   => $::lizardfs::group,
+      require => File["${lizardfs::cfgdir}mfschunkserver.cfg"],
+      before  => File["${lizardfs::cfgdir}mfshdd.cfg"],
+    }
   }
 
-  -> file { "${lizardfs::cfgdir}mfshdd.cfg":
+  file { "${lizardfs::cfgdir}mfshdd.cfg":
     content => template('lizardfs/etc/lizardfs/mfshdd.cfg.erb'),
     notify  => Exec['mfschunkserver reload'],
   }

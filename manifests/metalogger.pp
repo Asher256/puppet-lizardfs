@@ -56,6 +56,8 @@ class lizardfs::metalogger(
   validate_string($ensure)
   validate_hash($options)
   validate_bool($manage_service)
+  validate_string($data_path)
+  validate_bool($create_data_path)
 
   $options_keys = upcase(keys($options))
   if 'DATA_PATH' in $options_keys {

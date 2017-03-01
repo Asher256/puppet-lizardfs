@@ -100,6 +100,7 @@ class lizardfs::master(
   validate_array($topology)
   validate_array($globaliolimits)
   validate_bool($manage_service)
+  validate_string($data_path)
   validate_bool($create_data_path)
 
   $options_keys = upcase(keys($options))
