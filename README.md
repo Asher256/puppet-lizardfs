@@ -117,4 +117,3 @@ essential for keeping it great. I can't access the huge number of platforms and
 myriad hardware, software, and deployment configurations that Puppet is
 intended to serve. I encourage you to contribute. Send me your pull requests on
 Github!
-
