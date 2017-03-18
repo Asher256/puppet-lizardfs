@@ -27,10 +27,10 @@ class lizardfs::init::dirs() {
 
   if $::lizardfs::create_legacy {
     file { $::lizardfs::legacy_cfgdir:
-      ensure  => directory,
-      owner   => 'root',
-      group   => 'root',
-      mode    => '0755',
+      ensure => directory,
+      owner  => 'root',
+      group  => 'root',
+      mode   => '0755',
     }
   }
 }

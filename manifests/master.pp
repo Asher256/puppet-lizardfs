@@ -105,7 +105,11 @@ class lizardfs::master(
 
   $options_keys = upcase(keys($options))
   if 'PERSONALITY' in $options_keys {
-    fail('It is forbidden to modify the personality of the LizardFS Master with "lizardfs::master::options[\'PERSONALITY\']". Use \'lizardfs::master::first_personality\' to set the first personality.')
+    $error =  'It is forbidden to modify the personality of the LizardFS'\
+              ' Master with "lizardfs::master::options[\'PERSONALITY\']".'\
+              ' Use \'lizardfs::master::first_personality\' to set the '\
+              'first personality.'
+    fail($error)
   }
 
   if 'DATA_PATH' in $options_keys {
