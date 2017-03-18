@@ -104,7 +104,7 @@ The class lizardfs::ha::keepalived (BETA) will switch the personality from
 SHADOW to MASTER with the failover script. The failover script.
 
 (The Pacemaker support is coming. Check the ALPHA version in
-manifests/ha/alpha/pacemaker.pp if you want to test it or improve it).
+misc/alpha/pacemaker.pp if you want to test it or improve it).
 
 ## Requirements
 
