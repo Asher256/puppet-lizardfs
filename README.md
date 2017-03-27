@@ -79,7 +79,7 @@ starting by now. Example:
 class {'lizardfs::master':
   ensure              => 'present',
   first_personality   => 'MASTER',
-  exports             => ['*    /    ro'],
+  exports             => ['*    /    rw,maproot=0'],
 }
 
 class {'lizardfs::ha::keepalived':

@@ -39,8 +39,7 @@ class lizardfs::init::repos() {
         source => 'http://packages.lizardfs.com/lizardfs.key',
       }
 
-      ->
-      ::apt::source {'lizardfs':
+      -> ::apt::source {'lizardfs':
         comment  => 'The official LizardFS repository.',
         location => "http://packages.lizardfs.com/debian/${::lsbdistcodename}",
         release  => $::lsbdistcodename,
