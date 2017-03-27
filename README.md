@@ -37,7 +37,7 @@ To configure the LizardFS master:
 class {'lizardfs::master':
   ensure              => 'present',
   first_personality   => 'MASTER',
-  exports             => ['*    /    ro'],
+  exports             => ['*    /    rw,maproot=0'],
 }
 ```
 
